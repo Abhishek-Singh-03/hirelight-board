@@ -47,6 +47,12 @@ All colors MUST be HSL.
     /* Gradients */
     --gradient-hero: linear-gradient(135deg, 217 91% 60%, 220 69% 50%);
     --gradient-card: linear-gradient(145deg, 0 0% 100%, 210 40% 98%);
+    --gradient-glow: linear-gradient(135deg, 217 91% 60% 0%, 217 91% 60% 100%);
+    
+    /* 3D Effects */
+    --shadow-3d: 0 4px 8px -2px hsl(217 91% 60% / 0.1), 0 8px 24px -4px hsl(217 91% 60% / 0.1);
+    --shadow-3d-hover: 0 8px 16px -4px hsl(217 91% 60% / 0.15), 0 16px 32px -8px hsl(217 91% 60% / 0.15);
+    --shadow-glow: 0 0 20px hsl(217 91% 60% / 0.3);
     
     --radius: 0.75rem;
 
