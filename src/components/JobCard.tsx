@@ -3,10 +3,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Building2, ExternalLink } from "lucide-react";
+import { Calendar, MapPin, Building2, ExternalLink, Share2, Twitter, Facebook, Linkedin, Link } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { motion, useAnimation, useMotionValue, useTransform } from "framer-motion";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export interface Job {
   id: string;
@@ -32,10 +33,59 @@ export function JobCard({ job, onClick }: JobCardProps) {
   const rotate = useTransform(x, [-250, 0], [-6, 0]); // only tilt left
   const applyOpacity = useTransform(x, [-120, -40], [1, 0]); // hint appears when dragging left
   const [isDragging, setIsDragging] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
+  const { toast } = useToast();
 
   const handleApplyClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     window.open(job.applyLink, "_blank");
+  };
+
+  const handleShareClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowShareMenu(!showShareMenu);
+  };
+
+  const handleCopyLink = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(job.applyLink);
+      toast({
+        title: "Link copied!",
+        description: "Job link has been copied to clipboard.",
+      });
+      setShowShareMenu(false);
+    } catch (err) {
+      toast({
+        title: "Copy failed",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSocialShare = (platform: string) => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const text = `Check out this job: ${job.title} at ${job.company}`;
+    const url = job.applyLink;
+    
+    let shareUrl = '';
+    switch (platform) {
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+        break;
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+        break;
+      case 'linkedin':
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+        break;
+    }
+    
+    if (shareUrl) {
+      window.open(shareUrl, '_blank', 'width=600,height=400');
+      setShowShareMenu(false);
+    }
   };
 
   const formatPostedDate = (dateString: string) => {
@@ -147,6 +197,67 @@ export function JobCard({ job, onClick }: JobCardProps) {
                 )}
               </div>
             )}
+            <div className="flex items-center space-x-2">
+              {job.category && (
+                <Badge className={getCategoryColor(job.category)}>
+                  {job.category}
+                </Badge>
+              )}
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 hover:bg-primary/10"
+                  onClick={handleShareClick}
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+                
+                {showShareMenu && (
+                  <div className="absolute right-0 top-full mt-2 bg-background border border-border rounded-lg shadow-lg z-10 p-2 min-w-[150px]">
+                    <div className="space-y-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start h-8"
+                        onClick={handleSocialShare('twitter')}
+                      >
+                        <Twitter className="h-4 w-4 mr-2" />
+                        Twitter
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start h-8"
+                        onClick={handleSocialShare('linkedin')}
+                      >
+                        <Linkedin className="h-4 w-4 mr-2" />
+                        LinkedIn
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start h-8"
+                        onClick={handleSocialShare('facebook')}
+                      >
+                        <Facebook className="h-4 w-4 mr-2" />
+                        Facebook
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start h-8"
+                        onClick={handleCopyLink}
+                      >
+                        <Link className="h-4 w-4 mr-2" />
+                        Copy Link
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
 
             {/* Description Preview */}
             {job.description && <p className="text-sm text-muted-foreground line-clamp-2">{job.description}</p>}
@@ -162,7 +273,6 @@ export function JobCard({ job, onClick }: JobCardProps) {
                 Apply Now
               </Button>
             </div>
-          </div>
         </CardContent>
       </Card>
     </motion.div>
