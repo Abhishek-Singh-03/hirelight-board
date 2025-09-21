@@ -4,6 +4,7 @@ import { HeroSection } from "@/components/HeroSection";
 import { FilterSidebar } from "@/components/FilterSidebar";
 import { JobList } from "@/components/JobList";
 import { Footer } from "@/components/Footer";
+import ScrollingBanner from "@/components/ScrollingBanner";
 import { Job } from "@/components/JobCard";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
@@ -80,6 +81,8 @@ const Index = () => {
         onSearchChange={setSearchTerm}
         onSearchSubmit={handleSearchSubmit}
       />
+
+      <ScrollingBanner />
 
       <HeroSection
         searchTerm={searchTerm}
