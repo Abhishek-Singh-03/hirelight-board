@@ -27,7 +27,7 @@ export function HeroSection({ searchTerm, onSearchChange, onSearchSubmit, totalJ
     <section className="relative py-20 px-4 bg-gradient-to-br from-primary/5 via-background to-accent/5">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-      
+
       <div className="container mx-auto text-center relative">
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Headline */}
@@ -43,7 +43,7 @@ export function HeroSection({ searchTerm, onSearchChange, onSearchSubmit, totalJ
           {/* Search Section */}
           <div className="max-w-2xl mx-auto">
             <Card className="p-6 shadow-lg">
-              <div className="flex space-x-2">
+              <div className="flex flex-col md:flex-row md:space-x-2 space-y-2 md:space-y-0">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -54,10 +54,10 @@ export function HeroSection({ searchTerm, onSearchChange, onSearchSubmit, totalJ
                     className="pl-10 h-12 text-base"
                   />
                 </div>
-                <Button 
-                  onClick={onSearchSubmit} 
+                <Button
+                  onClick={onSearchSubmit}
                   size="lg"
-                  className="px-8 h-12"
+                  className="h-12 md:px-8 w-full md:w-auto"
                 >
                   Search Jobs
                 </Button>
