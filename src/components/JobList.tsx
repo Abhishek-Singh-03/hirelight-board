@@ -9,18 +9,20 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 dayjs.extend(customParseFormat);
 
 interface JobListProps {
-  jobs: Job[];
+  jobs?: Job[]; // optional, since we fetch inside
   searchTerm: string;
-  selectedCategory: string
+  selectedCategory: string;
   onJobClick: (job: Job) => void;
-  loading: boolean;
 }
 
 export function JobList({ searchTerm, selectedCategory, onJobClick }: JobListProps) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [displayedJobs, setDisplayedJobs] = useState(6);
+
+  // pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const jobsPerPage = 6;
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -33,7 +35,6 @@ export function JobList({ searchTerm, selectedCategory, onJobClick }: JobListPro
         );
         const data = await response.json();
 
-        // Map Google Sheet rows to Job interface
         const formattedJobs: Job[] = data.map((row: any, index: number) => ({
           id: String(index + 1),
           title: row.Title || "Untitled Job",
@@ -44,10 +45,10 @@ export function JobList({ searchTerm, selectedCategory, onJobClick }: JobListPro
           category: row.Category?.toLowerCase() || "other",
           description: row.Description || "No description provided.",
           salary: row.Salary || "Not specified",
-          type: row.Type || "Full-time"
+          type: row.Type || "Full-time",
         }));
 
-        // ✅ Sort by date+time (latest first)
+        // Sort latest first
         formattedJobs.sort((a, b) => {
           const dateA = dayjs(a.postedOn, "DD/MM/YYYY HH:mm");
           const dateB = dayjs(b.postedOn, "DD/MM/YYYY HH:mm");
@@ -65,7 +66,7 @@ export function JobList({ searchTerm, selectedCategory, onJobClick }: JobListPro
     fetchJobs();
   }, []);
 
-  // Filter jobs based on search term and category
+  // Filter jobs
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch =
       !searchTerm ||
@@ -79,10 +80,16 @@ export function JobList({ searchTerm, selectedCategory, onJobClick }: JobListPro
     return matchesSearch && matchesCategory;
   });
 
-  const jobsToShow = filteredJobs.slice(0, displayedJobs);
+  // Pagination logic
+  const indexOfLastJob = currentPage * jobsPerPage;
+  const indexOfFirstJob = indexOfLastJob - jobsPerPage;
+  const jobsToShow = filteredJobs.slice(indexOfFirstJob, indexOfLastJob);
+  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
 
-  const loadMore = () => {
-    setDisplayedJobs((prev) => Math.min(prev + 6, filteredJobs.length));
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
   };
 
   if (loading) {
@@ -127,21 +134,20 @@ export function JobList({ searchTerm, selectedCategory, onJobClick }: JobListPro
   return (
     <div className="space-y-6">
       {/* Results Count */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-xl font-semibold">
           {filteredJobs.length} Job{filteredJobs.length !== 1 ? "s" : ""} Found
         </h2>
         <div className="text-sm text-muted-foreground">
-          Showing {jobsToShow.length} of {filteredJobs.length}
+          Page {currentPage} of {totalPages}
         </div>
       </div>
 
-      {/* Job Cards Grid */}
+      {/* Job Cards */}
       <div className="grid gap-6">
         {jobsToShow.map((job, index) => (
           <div key={job.id}>
             <JobCard job={job} onClick={() => onJobClick(job)} />
-            {/* Ad placement every 3 jobs */}
             {(index + 1) % 3 === 0 && index < jobsToShow.length - 1 && (
               <Card className="mt-6 bg-muted/30 border-dashed border-2">
                 <CardContent className="p-6 text-center">
@@ -160,14 +166,76 @@ export function JobList({ searchTerm, selectedCategory, onJobClick }: JobListPro
         ))}
       </div>
 
-      {/* Load More Button */}
-      {displayedJobs < filteredJobs.length && (
-        <div className="text-center pt-6">
-          <Button onClick={loadMore} variant="outline" size="lg">
-            Load More Jobs ({filteredJobs.length - displayedJobs} remaining)
-          </Button>
-        </div>
-      )}
+      {/* Pagination Controls */}
+      <div className="flex justify-center items-center gap-2 pt-6 flex-wrap overflow-x-auto">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={currentPage === 1}
+          onClick={() => goToPage(currentPage - 1)}
+        >
+          Prev
+        </Button>
+
+        {(() => {
+          const pages: (number | string)[] = [];
+          const maxVisible = 5;
+
+          if (totalPages <= maxVisible) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i);
+          } else {
+            if (currentPage <= 3) {
+              pages.push(1, 2, 3, 4, 5, "...", totalPages);
+            } else if (currentPage >= totalPages - 2) {
+              pages.push(
+                1,
+                "...",
+                totalPages - 4,
+                totalPages - 3,
+                totalPages - 2,
+                totalPages - 1,
+                totalPages
+              );
+            } else {
+              pages.push(
+                1,
+                "...",
+                currentPage - 1,
+                currentPage,
+                currentPage + 1,
+                "...",
+                totalPages
+              );
+            }
+          }
+
+          return pages.map((p, i) =>
+            p === "..." ? (
+              <span key={`dots-${i}`} className="px-2 text-muted-foreground">
+                ...
+              </span>
+            ) : (
+              <Button
+                key={p}
+                variant={currentPage === p ? "default" : "outline"}
+                size="sm"
+                onClick={() => goToPage(Number(p))}
+              >
+                {p}
+              </Button>
+            )
+          );
+        })()}
+
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={currentPage === totalPages}
+          onClick={() => goToPage(currentPage + 1)}
+        >
+          Next
+        </Button>
+      </div>
     </div>
   );
 }
