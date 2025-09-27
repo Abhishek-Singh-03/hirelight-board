@@ -78,17 +78,6 @@ export function HeroSection({ searchTerm, onSearchChange, onSearchSubmit, totalJ
             ))}
           </div>
 
-          {/* Top Banner Ad Placeholder */}
-          <div className="pt-8">
-            <Card className="bg-muted/30 border-dashed border-2">
-              <CardContent className="p-8 text-center">
-                <div className="text-xs text-muted-foreground mb-2">Advertisement</div>
-                <div className="h-24 bg-muted rounded border-2 border-dashed border-muted-foreground/20 flex items-center justify-center">
-                  <span className="text-sm text-muted-foreground">Top Banner Ad Space (728x90)</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </div>
     </section>
