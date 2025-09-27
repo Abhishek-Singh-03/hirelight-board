@@ -1,8 +1,9 @@
-import { Search, Menu, Briefcase, X } from "lucide-react";
+import { Search, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useState } from "react";
+import logo from "@/assets/logo.png";
 
 interface HeaderProps {
   searchTerm: string;
@@ -31,8 +32,8 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <div className="flex items-center space-x-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/25 transform hover:scale-105 transition-transform duration-200">
-              <Briefcase className="h-6 w-6 text-primary-foreground" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/20 shadow-lg shadow-primary/25 transform hover:scale-105 transition-transform duration-200">
+              <img src={logo} alt="JobWise Logo" className="h-8 w-8 object-contain" />
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">JobWise</span>
           </div>
