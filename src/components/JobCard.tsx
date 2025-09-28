@@ -203,7 +203,7 @@ export function JobCard({ job, onClick }: JobCardProps) {
                   {job.category}
                 </Badge>
               )}
-              <div className="relative">
+              {/* <div className="relative">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -255,7 +255,7 @@ export function JobCard({ job, onClick }: JobCardProps) {
                     </div>
                   </div>
                 )}
-              </div>
+              </div> */}
             </div>
           </div>
 

@@ -23,7 +23,6 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 6;
 
-
   // Filter jobs
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch =
@@ -90,7 +89,7 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
   }
 
   return (
-    <div className="space-y-6">
+    <div id="jobs" className="space-y-6">
       {/* Results Count */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-xl font-semibold">

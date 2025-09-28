@@ -41,17 +41,17 @@ export function Footer() {
               Your trusted partner in finding the perfect career opportunity. Connect with top employers and discover your dream job.
             </p>
             <div className="space-y-2">
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              {/* <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <Mail className="h-4 w-4" />
                 <span>contact@jobwise.com</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              </div> */}
+              {/* <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <Phone className="h-4 w-4" />
                 <span>+91 12345 67890</span>
-              </div>
+              </div> */}
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4" />
-                <span>Bangalore, India</span>
+                <span>Mumbai, India</span>
               </div>
             </div>
           </div>

@@ -7,7 +7,7 @@ const ScrollingBanner = () => {
   const bannerItems = [
     {
       icon: Zap,
-      text: "🔥 500+ New Jobs Added This Week!",
+      text: "🔥 100+ New Jobs Added This Week!",
       color: "from-yellow-400 to-orange-500",
       bgColor: "bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20"
     },

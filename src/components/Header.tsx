@@ -22,9 +22,20 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
 
   const navItems = [
     { name: 'Home', href: '/' },
-    { name: 'Jobs', href: '/jobs' },
-    { name: 'Contact', href: '/contact' },
+    { name: 'Jobs', href: '#jobs' },
+    // { name: 'Contact', href: '/contact' },
   ];
+
+  const handleNavClick = (href: string) => {
+    if (href === '#jobs') {
+      const jobsSection = document.getElementById('jobs');
+      if (jobsSection) {
+        jobsSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      window.location.href = href;
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg shadow-primary/5">
@@ -59,6 +70,12 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
                 <a
                   key={item.name}
                   href={item.href}
+                  onClick={(e) => {
+                    if (item.href === '#jobs') {
+                      e.preventDefault();
+                      handleNavClick(item.href);
+                    }
+                  }}
                   className="text-sm font-medium text-muted-foreground hover:text-primary transition-all duration-200 relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left px-3 py-2 rounded-lg hover:bg-primary/5"
                 >
                   {item.name}
@@ -93,7 +110,15 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
                 <a
                   key={item.name}
                   href={item.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  onClick={(e) => {
+                    if (item.href === '#jobs') {
+                      e.preventDefault();
+                      handleNavClick(item.href);
+                      setIsMobileMenuOpen(false);
+                    } else {
+                      setIsMobileMenuOpen(false);
+                    }
+                  }}
                   className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-200 px-4 py-3 rounded-lg hover:bg-primary/5 border border-transparent hover:border-primary/10"
                 >
                   {item.name}
