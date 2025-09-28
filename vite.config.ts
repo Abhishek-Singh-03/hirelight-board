@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  base: "/",
+  base: "./",
   build: {
     assetsInlineLimit: 0,
     outDir: 'dist'
