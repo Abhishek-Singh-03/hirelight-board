@@ -22,13 +22,13 @@ export default defineConfig(({ mode }) => ({
   base: "/",
   build: {
     assetsInlineLimit: 0,
+    outDir: 'dist',
     rollupOptions: {
       output: {
         entryFileNames: 'assets/[name].[hash].js',
         chunkFileNames: 'assets/[name].[hash].js',
         assetFileNames: 'assets/[name].[hash].[ext]'
       }
-    },
-    outDir: 'dist'
+    }
   }
 }));
