@@ -31,8 +31,17 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
       job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.location.toLowerCase().includes(searchTerm.toLowerCase());
 
+    // Normalize and match category (handles comma, slash, etc.)
+    const normalize = (str: string) =>
+      str.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+    const selectedCatNorm = normalize(selectedCategory);
+    const jobCatNorm = normalize(job.category);
+
     const matchesCategory =
-      selectedCategory === "all" || job.category === selectedCategory;
+      selectedCategory === "all" ||
+      jobCatNorm.split(" ").includes(selectedCatNorm) ||
+      jobCatNorm.includes(selectedCatNorm);
 
     return matchesSearch && matchesCategory;
   });
