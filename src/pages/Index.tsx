@@ -21,9 +21,11 @@ const Index = () => {
     const fetchJobs = async () => {
       setLoading(true);
       try {
-        const response = await fetch(
-          "https://opensheet.elk.sh/1s1a2XpHEmQnIATVQwK2VXszUPwAh306GWtkYbkBfFOY/Sheet1"
-        );
+        // Call the server-side Netlify Function instead of the opensheet URL directly
+        const response = await fetch("/.netlify/functions/jobs");
+        if (!response.ok) {
+          throw new Error(`Failed to fetch jobs: ${response.status}`);
+        }
         const data = await response.json();
 
         const formattedJobs: Job[] = data.map((row: any, index: number) => ({
