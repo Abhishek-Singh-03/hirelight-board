@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Building2, ExternalLink, Share2, Twitter, Facebook, Linkedin, Link } from "lucide-react";
+import { Calendar, MapPin, Building2, ExternalLink, Share2, Twitter, Facebook, Linkedin, Link, FileText } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { motion, useAnimation, useMotionValue, useTransform } from "framer-motion";
 import { useState } from "react";
@@ -25,13 +25,17 @@ export interface Job {
 interface JobCardProps {
   job: Job;
   onClick?: () => void;
+  matchScore?: number;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
 }
 
-export function JobCard({ job, onClick }: JobCardProps) {
+export function JobCard({ job, onClick, matchScore, onSwipeLeft, onSwipeRight }: JobCardProps) {
   const controls = useAnimation();
   const x = useMotionValue(0);
-  const rotate = useTransform(x, [-250, 0], [-6, 0]); // only tilt left
+  const rotate = useTransform(x, [-250, 0, 250], [-6, 0, 6]); // tilt left and right
   const applyOpacity = useTransform(x, [-120, -40], [1, 0]); // hint appears when dragging left
+  const saveOpacity = useTransform(x, [40, 120], [0, 1]); // hint appears when dragging right
   const [isDragging, setIsDragging] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const { toast } = useToast();
@@ -39,6 +43,34 @@ export function JobCard({ job, onClick }: JobCardProps) {
   const handleApplyClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     window.open(job.applyLink, "_blank");
+  };
+
+  const generateCoverLetter = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const text = `Dear Hiring Manager at ${job.company},
+
+I am writing to express my strong interest in the ${job.title} position. 
+Given my background and passion for your industry, I am confident in my ability to contribute effectively to your team.
+
+I have reviewed the requirements, including:
+"${job.description ? job.description.substring(0, 150).trim() + "..." : "Your core technical requirements."}"
+
+I would welcome the opportunity to discuss how my skills align with your needs in an interview. 
+
+Thank you for your time and consideration.
+
+Best regards,
+[Your Name Here]`;
+
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Cover_Letter_${job.company.replace(/[^a-zA-Z0-9]/g, '_')}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    toast({ title: "Cover Letter Created!", description: "Cover letter downloaded as a text file." });
   };
 
   const handleShareClick = (e: React.MouseEvent) => {
@@ -113,7 +145,7 @@ export function JobCard({ job, onClick }: JobCardProps) {
   return (
     <motion.div
       drag="x"
-      dragConstraints={{ left: -250, right: 0 }} // ❌ no right drag allowed
+      dragConstraints={{ left: -250, right: 250 }} 
       dragElastic={0.12}
       style={{ x, rotate }}
       onDragStart={() => setIsDragging(true)}
@@ -124,10 +156,24 @@ export function JobCard({ job, onClick }: JobCardProps) {
         const offsetThreshold = 120;
         const velocityThreshold = 500;
 
-        // LEFT swipe → open apply link
+        // LEFT swipe → skip / pass
         const isLeftSwipe = offsetX < -offsetThreshold || velocityX < -velocityThreshold;
+        // RIGHT swipe → save
+        const isRightSwipe = offsetX > offsetThreshold || velocityX > velocityThreshold;
 
-        if (isLeftSwipe) {
+        if (isLeftSwipe && onSwipeLeft) {
+          controls.start({ x: -1000, opacity: 0, transition: { duration: 0.35 } }).then(() => {
+            onSwipeLeft();
+            controls.set({ x: 0, opacity: 1 });
+          });
+        } else if (isRightSwipe && onSwipeRight) {
+          controls.start({ x: 1000, opacity: 0, transition: { duration: 0.35 } }).then(() => {
+            onSwipeRight();
+            controls.set({ x: 0, opacity: 1 });
+          });
+        }
+        else if (isLeftSwipe && !onSwipeLeft) {
+          // original generic behavior
           controls
             .start({ x: -1000, opacity: 0, transition: { duration: 0.35 } })
             .then(() => {
@@ -140,19 +186,28 @@ export function JobCard({ job, onClick }: JobCardProps) {
         }
       }}
       animate={controls}
-      className="cursor-grab active:cursor-grabbing"
+      className="cursor-grab active:cursor-grabbing w-full"
     >
       <Card
-        className="group transition-all duration-200 hover:shadow-lg hover:bg-job-card-hover border-border/50"
+        className="group relative overflow-hidden glass glass-hover transition-all duration-500 rounded-2xl"
         onClick={!isDragging ? onClick : undefined}
       >
-        <CardContent className="p-6 relative">
+        {/* Neon Glow background decoration */}
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/20 rounded-full blur-[80px] pointer-events-none group-hover:bg-primary/40 transition-all duration-500" />
+        
+        <CardContent className="p-6 relative z-10 w-full h-full">
           {/* hint when dragging left */}
           <motion.span
             style={{ opacity: applyOpacity }}
-            className="absolute right-4 top-4 text-xs font-semibold px-2 py-1 rounded-md bg-green-50 text-green-700 pointer-events-none"
+            className="absolute right-4 top-4 text-xs font-semibold px-2 py-1 rounded-md bg-destructive/10 text-destructive border border-destructive/20 pointer-events-none z-20"
           >
-            ← Release to Apply
+            ← Pass
+          </motion.span>
+          <motion.span
+            style={{ opacity: saveOpacity }}
+            className="absolute left-4 top-4 text-xs font-semibold px-2 py-1 rounded-md bg-success/10 text-success border border-success/20 pointer-events-none z-20"
+          >
+            Save →
           </motion.span>
 
           <div className="space-y-4">
@@ -167,7 +222,14 @@ export function JobCard({ job, onClick }: JobCardProps) {
                   <span className="text-sm font-medium">{job.company}</span>
                 </div>
               </div>
-              {job.category && <Badge className={getCategoryColor(job.category)}>{job.category}</Badge>}
+              <div className="flex flex-col items-end gap-2">
+                {job.category && <Badge className={getCategoryColor(job.category)}>{job.category}</Badge>}
+                {matchScore !== undefined && (
+                  <Badge variant={matchScore > 75 ? "default" : "secondary"} className={matchScore > 75 ? "bg-primary text-primary-foreground animate-pulse" : ""}>
+                    {matchScore}% Match
+                  </Badge>
+                )}
+              </div>
             </div>
 
             {/* Location and Date */}
@@ -262,15 +324,44 @@ export function JobCard({ job, onClick }: JobCardProps) {
             {/* Description Preview */}
             {job.description && <p className="text-sm text-muted-foreground line-clamp-2">{job.description}</p>}
 
-            {/* Apply Button */}
-            <div className="pt-2">
+            {/* Actions: Apply and Save */}
+            <div className="pt-4 flex gap-3">
               <Button
                 onClick={handleApplyClick}
-                className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all"
-                variant="outline"
+                className="flex-1 bg-primary/90 hover:bg-primary text-primary-foreground transition-all shadow-[0_0_15px_-3px_var(--primary)] hover:shadow-[0_0_20px_0px_var(--primary)]"
               >
                 <ExternalLink className="h-4 w-4 mr-2" />
-                Apply Now
+                Quick Apply
+              </Button>
+              
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Simple localStorage save
+                  const saved = JSON.parse(localStorage.getItem('savedJobs') || '[]');
+                  if(!saved.find((s: Job) => s.id === job.id)) {
+                    saved.push(job);
+                    localStorage.setItem('savedJobs', JSON.stringify(saved));
+                    toast({title: "Job Saved!", description: "Added to your tracker board."});
+                  } else {
+                    toast({title: "Already Saved", description: "This job is already in your tracker."});
+                  }
+                }}
+                className="bg-secondary hover:bg-white/10 transition-all border border-white/5"
+                variant="outline"
+              >
+                <Badge className="mr-2 bg-white/10 hover:bg-white/20 text-foreground">Track</Badge> 
+                📌
+              </Button>
+
+              <Button
+                onClick={generateCoverLetter}
+                className="bg-secondary hover:bg-primary/20 text-primary transition-all border border-primary/20"
+                variant="outline"
+                size="icon"
+                title="Generate Cover Letter"
+              >
+                <FileText className="h-4 w-4" />
               </Button>
             </div>
         </CardContent>

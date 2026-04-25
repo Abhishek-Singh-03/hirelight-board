@@ -2,127 +2,86 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 215 25% 27%;
+    /* Base background: Deep dark slate/black */
+    --background: 240 10% 4%;
+    --foreground: 0 0% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 215 25% 27%;
+    --card: 240 10% 6%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 27%;
+    --popover: 240 10% 6%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 217 91% 60%;
+    /* Primary: Electric Blue / Neon Indigo */
+    --primary: 252 87% 67%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 98%;
-    --secondary-foreground: 215 25% 27%;
+    --secondary: 240 5% 12%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 240 5% 15%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent: 210 40% 98%;
-    --accent-foreground: 215 25% 27%;
+    --accent: 252 87% 67%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 217 91% 60%;
+    --border: 240 5% 15%;
+    --input: 240 5% 15%;
+    --ring: 252 87% 67%;
 
     /* Job Board Specific Colors */
-    --job-card: 0 0% 100%;
-    --job-card-hover: 210 40% 98%;
+    --job-card: 240 10% 8%; /* Dark frosted glass */
+    --job-card-hover: 240 10% 12%; 
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
     --warning: 45 93% 47%;
     --warning-foreground: 0 0% 100%;
     
-    /* Gradients */
-    --gradient-hero: linear-gradient(135deg, 217 91% 60%, 220 69% 50%);
-    --gradient-card: linear-gradient(145deg, 0 0% 100%, 210 40% 98%);
-    --gradient-glow: linear-gradient(135deg, 217 91% 60% 0%, 217 91% 60% 100%);
+    /* Gradients & Animations */
+    --gradient-hero: linear-gradient(135deg, hsl(252, 87%, 67%), hsl(280, 87%, 65%));
+    --gradient-card: linear-gradient(145deg, hsl(240, 10%, 8%), hsl(240, 10%, 10%));
+    --gradient-glow: linear-gradient(135deg, hsl(252, 87%, 67%, 0.5), transparent);
     
-    /* 3D Effects */
-    --shadow-3d: 0 4px 8px -2px hsl(217 91% 60% / 0.1), 0 8px 24px -4px hsl(217 91% 60% / 0.1);
-    --shadow-3d-hover: 0 8px 16px -4px hsl(217 91% 60% / 0.15), 0 16px 32px -8px hsl(217 91% 60% / 0.15);
-    --shadow-glow: 0 0 20px hsl(217 91% 60% / 0.3);
-    
-    --radius: 0.75rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --radius: 1rem;
   }
 
+  /* Force dark mode to be the default stunning look */
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 240 10% 4%;
+    --foreground: 0 0% 98%;
 
-    --card: 217.2 32.6% 17.5%;
-    --card-foreground: 210 40% 98%;
+    --card: 240 10% 6%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 10% 6%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 217 91% 60%;
+    --primary: 252 87% 67%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 5% 12%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 240 5% 15%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 252 87% 67%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 240 5% 15%;
+    --input: 240 5% 15%;
+    --ring: 252 87% 67%;
     
-    /* Job Board Specific Colors - Dark Mode */
-    --job-card: 217.2 32.6% 17.5%;
-    --job-card-hover: 217.2 32.6% 20%;
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
-    --warning: 45 93% 47%;
-    --warning-foreground: 0 0% 100%;
-    
-    /* Dark Mode Gradients */
-    --gradient-hero: linear-gradient(135deg, 217 91% 60%, 220 69% 50%);
-    --gradient-card: linear-gradient(145deg, 217.2 32.6% 17.5%, 217.2 32.6% 20%);
-    --gradient-glow: linear-gradient(135deg, 217 91% 60% 0%, 217 91% 60% 100%);
-    
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --job-card: 240 10% 6%;
+    --job-card-hover: 240 10% 10%;
   }
 }
 
@@ -130,17 +89,44 @@ All colors MUST be HSL.
   * {
     @apply border-border;
     user-select: text !important;
-    -webkit-user-select: text !important;
-    -moz-user-select: text !important;
-    -ms-user-select: text !important;
   }
 
   body {
     @apply bg-background text-foreground transition-colors duration-300;
+    /* Add a subtle dark grid background for premium feel */
+    background-image: linear-gradient(to right, #ffffff05 1px, transparent 1px),
+      linear-gradient(to bottom, #ffffff05 1px, transparent 1px);
+    background-size: 50px 50px;
   }
   
-  /* Smooth transitions for theme switching */
+  /* Smooth transitions */
   *, *::before, *::after {
-    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  /* Custom Scrollbar for sleekness */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent; 
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3); 
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.5); 
+  }
+}
+
+/* Glassmorphism utilities */
+@layer utilities {
+  .glass {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
+  }
+  .glass-hover {
+    @apply hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:shadow-[0_0_30px_-5px_var(--primary)];
   }
 }

@@ -3,7 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { MapPin, Calendar, Building2, Code, Briefcase, GraduationCap, Users, DollarSign } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { MapPin, Calendar, Building2, Code, Briefcase, GraduationCap, Users, DollarSign, Sparkles } from "lucide-react";
 import { useState } from "react";
 
 interface FilterSidebarProps {
@@ -15,9 +16,11 @@ interface FilterSidebarProps {
     fresher: number;
     government: number;
   };
+  resumeText?: string;
+  onResumeChange?: (text: string) => void;
 }
 
-export function FilterSidebar({ selectedCategory, onCategoryChange, jobStats }: FilterSidebarProps) {
+export function FilterSidebar({ selectedCategory, onCategoryChange, jobStats, resumeText, onResumeChange }: FilterSidebarProps) {
   const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>([]);
   const [selectedSalaryRange, setSelectedSalaryRange] = useState<string[]>([]);
   const [selectedExperience, setSelectedExperience] = useState<string[]>([]);
@@ -94,6 +97,29 @@ export function FilterSidebar({ selectedCategory, onCategoryChange, jobStats }: 
           ))}
         </CardContent>
       </Card>
+
+      {/* AI Resume Matcher */}
+      {onResumeChange && (
+        <Card className="border-2 border-primary/20 shadow-[0_0_15px_-5px_var(--primary)] bg-gradient-to-b from-card to-primary/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center text-primary">
+              <Sparkles className="h-4 w-4 mr-2" />
+              Smart Resume Match
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground mb-3">
+              Paste your resume text here. We'll instantly score jobs based on your skills!
+            </p>
+            <Textarea 
+              placeholder="E.g., Experienced React developer with Node.js and TypeScript..."
+              className="resize-none h-32 bg-background/50 border-primary/20 focus-visible:ring-primary"
+              value={resumeText}
+              onChange={(e) => onResumeChange(e.target.value)}
+            />
+          </CardContent>
+        </Card>
+      )}
 
     </div>
   );

@@ -22,12 +22,12 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
 
   const navItems = [
     { name: 'Home', href: '/' },
-    { name: 'Jobs', href: '#jobs' },
-    // { name: 'Contact', href: '/contact' },
+    { name: 'Jobs', href: '/#jobs' },
+    { name: 'My Board 📌', href: '/dashboard' },
   ];
 
   const handleNavClick = (href: string) => {
-    if (href === '#jobs') {
+    if (href === '/#jobs' && window.location.pathname === '/') {
       const jobsSection = document.getElementById('jobs');
       if (jobsSection) {
         jobsSection.scrollIntoView({ behavior: 'smooth' });
@@ -71,7 +71,7 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
                   key={item.name}
                   href={item.href}
                   onClick={(e) => {
-                    if (item.href === '#jobs') {
+                    if (item.href === '/#jobs' && window.location.pathname === '/') {
                       e.preventDefault();
                       handleNavClick(item.href);
                     }
@@ -111,7 +111,7 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
                   key={item.name}
                   href={item.href}
                   onClick={(e) => {
-                    if (item.href === '#jobs') {
+                    if (item.href === '/#jobs' && window.location.pathname === '/') {
                       e.preventDefault();
                       handleNavClick(item.href);
                       setIsMobileMenuOpen(false);

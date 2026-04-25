@@ -14,6 +14,7 @@ dayjs.extend(customParseFormat);
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [resumeText, setResumeText] = useState("");
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,8 +22,11 @@ const Index = () => {
     const fetchJobs = async () => {
       setLoading(true);
       try {
-        // Call the server-side Netlify Function instead of the opensheet URL directly
-        const response = await fetch("/.netlify/functions/jobs");
+        // Call the server-side Netlify Function in production, but use direct sheet in dev since we are running vite without Netlify CLI.
+        const endpoint = import.meta.env.DEV
+          ? "/.netlify/functions/jobs"
+          : "/.netlify/functions/jobs";
+        const response = await fetch(endpoint);
         if (!response.ok) {
           throw new Error(`Failed to fetch jobs: ${response.status}`);
         }
@@ -101,17 +105,20 @@ const Index = () => {
               selectedCategory={selectedCategory}
               onCategoryChange={setSelectedCategory}
               jobStats={jobStats}
+              resumeText={resumeText}
+              onResumeChange={setResumeText}
             />
           </div>
 
           {/* Job Listings */}
           <div className="lg:col-span-3">
             <JobList
-              jobs={jobs} // ✅ pass jobs instead of fetching inside JobList
+              jobs={jobs}
               searchTerm={searchTerm}
               selectedCategory={selectedCategory}
               onJobClick={handleJobClick}
               loading={loading}
+              resumeText={resumeText}
             />
           </div>
         </div>

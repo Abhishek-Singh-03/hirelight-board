@@ -8,21 +8,21 @@ export function Footer() {
     "Quick Links": [
       { label: "Home", href: "#" },
       { label: "Browse Jobs", href: "#" },
-      { label: "Companies", href: "#" },
-      { label: "Career Advice", href: "#" },
+      // { label: "Companies", href: "#" },
+      // { label: "Career Advice", href: "#" },
     ],
-    "Job Categories": [
-      { label: "IT & Software", href: "#" },
-      { label: "Government Jobs", href: "#" },
-      { label: "Fresher Jobs", href: "#" },
-      { label: "Remote Work", href: "#" },
-    ],
-    "Support": [
-      { label: "Help Center", href: "#" },
-      { label: "Privacy Policy", href: "#" },
-      { label: "Terms of Service", href: "#" },
-      { label: "Contact Us", href: "#" },
-    ],
+    // "Job Categories": [
+    //   { label: "IT & Software", href: "#" },
+    //   { label: "Government Jobs", href: "#" },
+    //   { label: "Fresher Jobs", href: "#" },
+    //   { label: "Remote Work", href: "#" },
+    // ],
+    // "Support": [
+    //   { label: "Help Center", href: "#" },
+    //   { label: "Privacy Policy", href: "#" },
+    //   { label: "Terms of Service", href: "#" },
+    //   { label: "Contact Us", href: "#" },
+    // ],
   };
 
   return (
