@@ -43,6 +43,7 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
     { name: 'Jobs', href: '/#jobs' },
     { name: 'My Board 📌', href: '/dashboard' },
     { name: 'For Recruiters 🏢', href: '/talent' },
+    { name: 'Community 💬', href: '/community' },
   ];
 
   const handleNavClick = (href: string) => {

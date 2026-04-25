@@ -9,6 +9,8 @@ import Contact from "./pages/Contact";
 import Dashboard from "./pages/Dashboard";
 import Talent from "./pages/Talent";
 import NotFound from "./pages/NotFound";
+import Community from "./pages/Community";
+import { ParticleBackground } from "./components/ParticleBackground";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +23,7 @@ const App = () => (
       disableTransitionOnChange={false}
     >
       <TooltipProvider>
+        <ParticleBackground />
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -29,6 +32,7 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/talent" element={<Talent />} />
+            <Route path="/community" element={<Community />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
