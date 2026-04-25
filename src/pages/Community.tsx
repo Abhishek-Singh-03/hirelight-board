@@ -33,6 +33,7 @@ const DUMMY_EXPERIENCES: ExperiencePost[] = [
 export default function Community() {
   const [searchTerm, setSearchTerm] = useState("");
   const [posts, setPosts] = useState<ExperiencePost[]>([]);
+  const [selectedPost, setSelectedPost] = useState<ExperiencePost | null>(null);
 
   useEffect(() => {
     // Merge dummy with localStorage
@@ -70,7 +71,11 @@ export default function Community() {
 
         <div className="max-w-4xl mx-auto space-y-6">
           {filtered.map(post => (
-            <Card key={post.id} className="border-2 border-primary/10 glass glass-hover transition-all duration-300">
+            <Card 
+              key={post.id} 
+              className="border-2 border-primary/10 glass glass-hover transition-all duration-300 cursor-pointer"
+              onClick={() => setSelectedPost(post)}
+            >
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                   <div>
@@ -89,7 +94,7 @@ export default function Community() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="bg-background/40 p-4 rounded-xl border border-border/50 text-sm md:text-base leading-relaxed">
+                <div className="bg-background/40 p-4 rounded-xl border border-border/50 text-sm md:text-base leading-relaxed line-clamp-3">
                   {post.text}
                 </div>
                 <div className="mt-4 flex items-center gap-4">
@@ -109,6 +114,61 @@ export default function Community() {
             </div>
           )}
         </div>
+
+        {/* FULL BLOG READER MODAL */}
+        {selectedPost && (
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-fade-in"
+            onClick={() => setSelectedPost(null)}
+          >
+            <Card 
+              className="w-full max-w-3xl max-h-[85vh] overflow-y-auto border-2 border-primary/30 shadow-[0_0_40px_-10px_var(--primary)] glass"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <CardHeader className="border-b border-border/50 bg-background/50 sticky top-0 backdrop-blur pb-6">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-2xl md:text-3xl font-extrabold flex items-center gap-3">
+                      <Building2 className="h-8 w-8 text-primary" />
+                      {selectedPost.jobTitle} at {selectedPost.company}
+                    </CardTitle>
+                    <div className="text-muted-foreground mt-3 flex items-center gap-6">
+                      <span className="font-semibold text-foreground">By: {selectedPost.author}</span>
+                      <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {selectedPost.date}</span>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => setSelectedPost(null)} className="rounded-full hover:bg-destructive/10 hover:text-destructive">
+                     ✕
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-8">
+                <Badge variant={selectedPost.type === 'offer' ? 'default' : 'secondary'} className={`mb-6 text-sm px-4 py-1.5 ${selectedPost.type === 'offer' ? 'bg-green-500/20 text-green-500 border-green-500/30' : ''}`}>
+                  {selectedPost.type === 'offer' ? '🎉 Received Offer' : '⏳ In Process'}
+                </Badge>
+
+                <div className="prose prose-invert max-w-none">
+                  {selectedPost.text.split('\n').map((paragraph, idx) => (
+                    <p key={idx} className="text-base md:text-lg leading-relaxed text-foreground/90 mb-4 tracking-wide font-medium">
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+
+                <div className="mt-12 pt-6 border-t border-border/50 flex justify-between items-center bg-background/30 p-4 rounded-xl">
+                  <span className="text-muted-foreground font-medium">Was this experience helpful?</span>
+                  <Button 
+                    variant="outline" 
+                    className="gap-2 bg-primary/10 hover:bg-primary/20 hover:text-primary transition-all border-primary/20" 
+                    onClick={() => handleUpvote(selectedPost.id)}
+                  >
+                    <ThumbsUp className="h-4 w-4" /> Upvote ({selectedPost.upvotes})
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </main>
 
       <Footer />
