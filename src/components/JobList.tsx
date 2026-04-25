@@ -15,9 +15,10 @@ interface JobListProps {
   onJobClick: (job: Job) => void;
   loading: boolean;
   resumeText?: string;
+  minLPA?: number;
 }
 
-export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loading, resumeText }: JobListProps) {
+export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loading, resumeText, minLPA }: JobListProps) {
   const [error, setError] = useState<string | null>(null);
   const [isSwipeMode, setIsSwipeMode] = useState(false);
   const [currentSwipeIndex, setCurrentSwipeIndex] = useState(0);
@@ -177,12 +178,23 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
                     matchScore = 65; 
                   }
                 }
+                
+                let isLocked = false;
+                if (minLPA && minLPA > 0 && job.salary) {
+                  const nums = job.salary.match(/\d+(\.\d+)?/g);
+                  if (nums) {
+                    const maxVal = Math.max(...nums.map(n => parseFloat(n)));
+                    if (maxVal < minLPA) isLocked = true;
+                  }
+                }
+
                 return (
                   <JobCard 
                     key={job.id} 
                     job={job} 
                     onClick={() => onJobClick(job)} 
                     matchScore={matchScore} 
+                    isLocked={isLocked}
                     onSwipeLeft={handleSwipePass}
                     onSwipeRight={() => handleSwipeSave(job)}
                   />
@@ -241,9 +253,18 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
               }
             }
 
+            let isLocked = false;
+            if (minLPA && minLPA > 0 && job.salary) {
+              const nums = job.salary.match(/\d+(\.\d+)?/g);
+              if (nums) {
+                const maxVal = Math.max(...nums.map(n => parseFloat(n)));
+                if (maxVal < minLPA) isLocked = true;
+              }
+            }
+
             return (
               <div key={job.id}>
-                <JobCard job={job} onClick={() => onJobClick(job)} matchScore={matchScore} />
+                <JobCard job={job} onClick={() => onJobClick(job)} matchScore={matchScore} isLocked={isLocked} />
               </div>
             );
           })}

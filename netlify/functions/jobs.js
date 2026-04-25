@@ -1,4 +1,4 @@
-const JOBS_URL = "https://opensheet.elk.sh/1s1a2XpHEmQnIATVQwK2VXszUPwAh306GWtkYbkBfFOY/Sheet1";
+const JOBS_URL = process.env.VITE_DEV_API;
 
 exports.handler = async function (event, context) {
   try {

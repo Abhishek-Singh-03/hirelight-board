@@ -28,9 +28,10 @@ interface JobCardProps {
   matchScore?: number;
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
+  isLocked?: boolean;
 }
 
-export function JobCard({ job, onClick, matchScore, onSwipeLeft, onSwipeRight }: JobCardProps) {
+export function JobCard({ job, onClick, matchScore, onSwipeLeft, onSwipeRight, isLocked }: JobCardProps) {
   const controls = useAnimation();
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-250, 0, 250], [-6, 0, 6]); // tilt left and right
@@ -189,9 +190,16 @@ Best regards,
       className="cursor-grab active:cursor-grabbing w-full"
     >
       <Card
-        className="group relative overflow-hidden glass glass-hover transition-all duration-500 rounded-2xl"
-        onClick={!isDragging ? onClick : undefined}
+        className={`group relative overflow-hidden glass glass-hover transition-all duration-500 rounded-2xl ${isLocked ? 'blur-[4px] grayscale select-none opacity-80 pointer-events-none' : ''}`}
+        onClick={!isDragging && !isLocked ? onClick : undefined}
       >
+        {isLocked && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/20 backdrop-blur-[2px]">
+            <div className="text-4xl mb-2">🔒</div>
+            <div className="font-bold text-destructive px-3 py-1 bg-destructive/10 rounded-lg">Below Minimum Worth</div>
+          </div>
+        )}
+
         {/* Neon Glow background decoration */}
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/20 rounded-full blur-[80px] pointer-events-none group-hover:bg-primary/40 transition-all duration-500" />
         
@@ -343,6 +351,18 @@ Best regards,
                     saved.push(job);
                     localStorage.setItem('savedJobs', JSON.stringify(saved));
                     toast({title: "Job Saved!", description: "Added to your tracker board."});
+
+                    // Hustle Streak Logic
+                    const today = new Date().toDateString();
+                    const streakData = JSON.parse(localStorage.getItem('hustleStreak') || '{"count": 0, "lastDate": ""}');
+                    if (streakData.lastDate !== today) {
+                       const yesterday = new Date(Date.now() - 86400000).toDateString();
+                       const isConsecutive = streakData.lastDate === yesterday;
+                       streakData.count = isConsecutive ? streakData.count + 1 : 1;
+                       streakData.lastDate = today;
+                       localStorage.setItem('hustleStreak', JSON.stringify(streakData));
+                       window.dispatchEvent(new Event('hustle-streak-updated'));
+                    }
                   } else {
                     toast({title: "Already Saved", description: "This job is already in your tracker."});
                   }

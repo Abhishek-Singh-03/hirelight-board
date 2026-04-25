@@ -4,8 +4,18 @@ import { Footer } from "@/components/Footer";
 import { JobCard, Job } from "@/components/JobCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, TrendingUp } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+
+const radarData = [
+  { subject: 'React / Frontend', me: 85, ideal: 90, fullMark: 100 },
+  { subject: 'Backend / APIs', me: 40, ideal: 70, fullMark: 100 },
+  { subject: 'System Design', me: 20, ideal: 60, fullMark: 100 },
+  { subject: 'CSS / UI', me: 95, ideal: 75, fullMark: 100 },
+  { subject: 'Git / CI/CD', me: 60, ideal: 80, fullMark: 100 },
+  { subject: 'Communication', me: 90, ideal: 85, fullMark: 100 },
+];
 
 const Dashboard = () => {
   const [savedJobs, setSavedJobs] = useState<Job[]>([]);
@@ -42,6 +52,37 @@ const Dashboard = () => {
           <p className="text-muted-foreground">
             Track and manage your saved job opportunities here.
           </p>
+        </div>
+
+        {/* Skill Gap Visualizer */}
+        <div className="mb-12">
+          <Card className="border-2 border-primary/20 bg-background/50 backdrop-blur glass">
+            <CardContent className="p-8 flex flex-col md:flex-row items-center gap-8">
+              <div className="flex-1 space-y-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Skill Gap Visualizer
+                </div>
+                <h2 className="text-2xl font-bold">You vs. The Ideal Candidate</h2>
+                <p className="text-muted-foreground text-sm">
+                  We've analyzed the jobs you track. Here is your current Radar Chart compared to what companies are actively asking for. 
+                  Focus your learning on <strong className="text-destructive">System Design</strong> and <strong className="text-destructive">Backend Development</strong> to increase your hiring chances by 34%.
+                </p>
+              </div>
+              <div className="w-full md:w-[400px] h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                    <PolarGrid stroke="#888" strokeOpacity={0.3} />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: 'currentColor', fontSize: 11 }} />
+                    <Tooltip cursor={{ stroke: 'white', strokeWidth: 1 }} contentStyle={{ backgroundColor: 'black', borderRadius: '10px' }} />
+                    <Legend />
+                    <Radar name="My Skills" dataKey="me" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.5} />
+                    <Radar name="Market Demand" dataKey="ideal" stroke="hsl(var(--destructive))" fill="hsl(var(--destructive))" fillOpacity={0.2} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {savedJobs.length === 0 ? (

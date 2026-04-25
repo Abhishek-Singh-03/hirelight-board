@@ -15,6 +15,7 @@ const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [resumeText, setResumeText] = useState("");
+  const [minLPA, setMinLPA] = useState(0);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -24,7 +25,7 @@ const Index = () => {
       try {
         // Call the server-side Netlify Function in production, but use direct sheet in dev since we are running vite without Netlify CLI.
         const endpoint = import.meta.env.DEV
-          ? "/.netlify/functions/jobs"
+          ? import.meta.env.VITE_DEV_API
           : "/.netlify/functions/jobs";
         const response = await fetch(endpoint);
         if (!response.ok) {
@@ -107,6 +108,8 @@ const Index = () => {
               jobStats={jobStats}
               resumeText={resumeText}
               onResumeChange={setResumeText}
+              minLPA={minLPA}
+              onMinLPAChange={setMinLPA}
             />
           </div>
 
@@ -119,6 +122,7 @@ const Index = () => {
               onJobClick={handleJobClick}
               loading={loading}
               resumeText={resumeText}
+              minLPA={minLPA}
             />
           </div>
         </div>

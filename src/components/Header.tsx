@@ -2,7 +2,7 @@ import { Search, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ThemeToggle from "@/components/ThemeToggle";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import logo from "@/assets/logo.png";
 
 interface HeaderProps {
@@ -13,6 +13,24 @@ interface HeaderProps {
 
 export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [streak, setStreak] = useState(0);
+
+  useEffect(() => {
+    const loadStreak = () => {
+      const data = JSON.parse(localStorage.getItem('hustleStreak') || '{"count": 0, "lastDate": ""}');
+      const today = new Date().toDateString();
+      const yesterday = new Date(Date.now() - 86400000).toDateString();
+      // If last applied wasn't today or yesterday, streak is broken
+      if (data.lastDate && data.lastDate !== today && data.lastDate !== yesterday) {
+        setStreak(0);
+      } else {
+        setStreak(data.count || 0);
+      }
+    };
+    loadStreak();
+    window.addEventListener('hustle-streak-updated', loadStreak);
+    return () => window.removeEventListener('hustle-streak-updated', loadStreak);
+  }, []);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -24,6 +42,7 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
     { name: 'Home', href: '/' },
     { name: 'Jobs', href: '/#jobs' },
     { name: 'My Board 📌', href: '/dashboard' },
+    { name: 'For Recruiters 🏢', href: '/talent' },
   ];
 
   const handleNavClick = (href: string) => {
@@ -83,6 +102,13 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
               ))}
             </nav>
             
+            {/* Hustle Streak gamification */}
+            {streak > 0 && (
+              <div className="flex items-center gap-1 bg-orange-500/10 text-orange-500 border border-orange-500/20 px-3 py-1.5 rounded-xl font-bold font-mono shadow-[0_0_10px_-2px_var(--orange-500)] animate-pulse" title="Daily Hustle Streak">
+                🔥 {streak}
+              </div>
+            )}
+
             {/* Theme Toggle */}
             <ThemeToggle />
           </div>

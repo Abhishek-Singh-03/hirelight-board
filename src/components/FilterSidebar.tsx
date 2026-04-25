@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { MapPin, Calendar, Building2, Code, Briefcase, GraduationCap, Users, DollarSign, Sparkles } from "lucide-react";
 import { useState } from "react";
 
@@ -18,9 +19,11 @@ interface FilterSidebarProps {
   };
   resumeText?: string;
   onResumeChange?: (text: string) => void;
+  minLPA?: number;
+  onMinLPAChange?: (val: number) => void;
 }
 
-export function FilterSidebar({ selectedCategory, onCategoryChange, jobStats, resumeText, onResumeChange }: FilterSidebarProps) {
+export function FilterSidebar({ selectedCategory, onCategoryChange, jobStats, resumeText, onResumeChange, minLPA, onMinLPAChange }: FilterSidebarProps) {
   const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>([]);
   const [selectedSalaryRange, setSelectedSalaryRange] = useState<string[]>([]);
   const [selectedExperience, setSelectedExperience] = useState<string[]>([]);
@@ -97,6 +100,34 @@ export function FilterSidebar({ selectedCategory, onCategoryChange, jobStats, re
           ))}
         </CardContent>
       </Card>
+
+      {/* Blind Salary Barrier */}
+      {onMinLPAChange && (
+        <Card className="border-2 border-destructive/20 shadow-lg shadow-destructive/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center text-destructive">
+              <span className="text-lg mr-2">🛑</span>
+              My Minimum Worth
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground mb-4">
+              Set your absolute minimum threshold. Jobs below this salary will be locked out so you don't waste your time!
+            </p>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold">₹</span>
+              <Input 
+                type="number" 
+                placeholder="e.g. 5"
+                className="w-20 bg-background/50 text-center font-bold"
+                value={minLPA || ''}
+                onChange={(e) => onMinLPAChange(Number(e.target.value) || 0)}
+              />
+              <span className="text-sm font-semibold">LPA +</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* AI Resume Matcher */}
       {onResumeChange && (
