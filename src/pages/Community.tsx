@@ -325,9 +325,9 @@ export default function Community() {
               onClick={() => setSelectedPost(post)}
             >
               <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-xl font-bold flex items-center gap-2">
+                <div className="flex flex-col md:flex-row justify-between items-start gap-3">
+                  <div className="w-full md:w-auto">
+                    <CardTitle className="text-lg md:text-xl font-bold flex items-center gap-2 flex-wrap">
                       <Building2 className="h-5 w-5 text-muted-foreground" />
                       {post.jobTitle} at {post.company}
                     </CardTitle>
@@ -382,82 +382,92 @@ export default function Community() {
           )}
         </div>
 
-        {/* ── Full Post Modal ──────────────────────────────────────────────── */}
-        {selectedPost && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-fade-in"
-            onClick={() => {
-              setSelectedPost(null);
-              // Clean the URL if we close the deep-linked post
-              if (shareCode) navigate("/community", { replace: true });
-            }}
-          >
-            <Card
-              className="w-full max-w-3xl max-h-[85vh] overflow-y-auto border-2 border-primary/30 shadow-[0_0_40px_-10px_var(--primary)] glass"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <CardHeader className="border-b border-border/50 bg-background/50 sticky top-0 backdrop-blur pb-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-2xl md:text-3xl font-extrabold flex items-center gap-3">
-                      <Building2 className="h-8 w-8 text-primary" />
-                      {selectedPost.jobTitle} at {selectedPost.company}
-                    </CardTitle>
-                    <div className="text-muted-foreground mt-3 flex items-center gap-6">
-                      <span className="font-semibold text-foreground flex items-center gap-1.5">
-                        {selectedPost.author === 'Anonymous'
-                          ? <><EyeOff className="h-4 w-4" /> Anonymous</>
-                          : <>By: {selectedPost.author}</>}
-                      </span>
-                      <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {selectedPost.date}</span>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="icon" 
-                    onClick={() => {
-                      setSelectedPost(null);
-                      if (shareCode) navigate("/community", { replace: true });
-                    }}
-                    className="rounded-full hover:bg-destructive/10 hover:text-destructive">✕</Button>
-                </div>
-              </CardHeader>
-              <CardContent className="p-8">
-                <Badge variant={selectedPost.type === 'offer' ? 'default' : 'secondary'}
-                  className={`mb-6 text-sm px-4 py-1.5 ${selectedPost.type === 'offer' ? 'bg-green-500/20 text-green-500 border-green-500/30' : ''}`}>
-                  {selectedPost.type === 'offer' ? '🎉 Received Offer' : selectedPost.type === 'rejection' ? '❌ Rejected' : '⏳ In Process'}
-                </Badge>
-
-                <div className="prose prose-invert max-w-none">
-                  {selectedPost.text.split('\n').map((paragraph, idx) => (
-                    paragraph.trim() ? (
-                      <p key={idx} className="text-base md:text-lg leading-relaxed text-foreground/90 mb-4 tracking-wide font-medium">
-                        {paragraph}
-                      </p>
-                    ) : <br key={idx} />
-                  ))}
-                </div>
-
-                <div className="mt-12 pt-6 border-t border-border/50 flex justify-between items-center bg-background/30 p-4 rounded-xl">
-                  <span className="text-muted-foreground font-medium">Was this experience helpful?</span>
-                  <div className="flex gap-2">
-                    <Button variant="outline"
-                      className={`gap-2 transition-all ${upvotedPosts.has(selectedPost.id) ? 'bg-primary text-primary-foreground border-primary' : 'bg-primary/10 hover:bg-primary/20 hover:text-primary border-primary/20'}`}
-                      onClick={() => handleUpvote(selectedPost.id)}>
-                      <ThumbsUp className="h-4 w-4" /> {upvotedPosts.has(selectedPost.id) ? 'Helpful' : 'Upvote'} ({selectedPost.upvotes})
-                    </Button>
-                    <Button variant="outline"
-                      className="gap-2 bg-muted/40 hover:bg-muted border-border transition-all"
-                      onClick={() => handleShare(selectedPost)}>
-                      <Share2 className="h-4 w-4" /> Share
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
       </main>
 
       <Footer />
+
+      {/* ── Full Post Modal ──────────────────────────────────────────────── */}
+      {selectedPost && (
+        <div
+          className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-4 pt-20 sm:p-4 bg-background/90 backdrop-blur-md animate-fade-in overflow-y-auto"
+          onClick={() => {
+            setSelectedPost(null);
+            if (shareCode) navigate("/community", { replace: true });
+          }}
+        >
+          <Card
+            className="w-full max-w-3xl max-h-[80dvh] sm:max-h-[85vh] overflow-y-auto border-2 border-primary/30 shadow-[0_0_40px_-10px_var(--primary)] glass shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <CardHeader className="border-b border-border/50 bg-background/50 sticky top-0 backdrop-blur pb-6 z-10">
+              <div className="flex justify-between items-start gap-2 md:gap-4">
+                <div className="flex-1">
+                  <CardTitle className="text-xl md:text-3xl font-extrabold flex items-start gap-3">
+                    <Building2 className="h-6 w-6 md:h-8 md:w-8 text-primary shrink-0 mt-1" />
+                    <span className="leading-tight">{selectedPost.jobTitle} at {selectedPost.company}</span>
+                  </CardTitle>
+                  <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-4 md:gap-6">
+                    <span className="font-semibold text-foreground flex items-center gap-1.5">
+                      {selectedPost.author === 'Anonymous'
+                        ? <><EyeOff className="h-4 w-4" /> Anonymous</>
+                        : <>By: {selectedPost.author}</>}
+                    </span>
+                    <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {selectedPost.date}</span>
+                  </div>
+                </div>
+                <Button variant="outline" size="icon" 
+                  onClick={() => {
+                    setSelectedPost(null);
+                    if (shareCode) navigate("/community", { replace: true });
+                  }}
+                  className="shrink-0 rounded-full hover:bg-destructive hover:text-destructive-foreground transition-colors w-10 h-10 ml-2">✕</Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-8">
+              <Badge variant={selectedPost.type === 'offer' ? 'default' : 'secondary'}
+                className={`mb-6 text-sm px-4 py-1.5 ${selectedPost.type === 'offer' ? 'bg-green-500/20 text-green-500 border-green-500/30' : ''}`}>
+                {selectedPost.type === 'offer' ? '🎉 Received Offer' : selectedPost.type === 'rejection' ? '❌ Rejected' : '⏳ In Process'}
+              </Badge>
+
+              <div className="prose prose-invert max-w-none">
+                {selectedPost.text.split('\n').map((paragraph, idx) => (
+                  paragraph.trim() ? (
+                    <p key={idx} className="text-base md:text-lg leading-relaxed text-foreground/90 mb-4 tracking-wide font-medium">
+                      {paragraph}
+                    </p>
+                  ) : <br key={idx} />
+                ))}
+              </div>
+
+              <div className="mt-12 pt-6 border-t border-border/50 flex flex-col sm:flex-row gap-4 justify-between items-center bg-background/30 p-4 rounded-xl">
+                <span className="text-muted-foreground font-medium text-center sm:text-left">Was this experience helpful?</span>
+                <div className="flex gap-2 w-full sm:w-auto justify-center">
+                  <Button variant="outline"
+                    className={`gap-2 transition-all ${upvotedPosts.has(selectedPost.id) ? 'bg-primary text-primary-foreground border-primary' : 'bg-primary/10 hover:bg-primary/20 hover:text-primary border-primary/20'}`}
+                    onClick={() => handleUpvote(selectedPost.id)}>
+                    <ThumbsUp className="h-4 w-4" /> {upvotedPosts.has(selectedPost.id) ? 'Helpful' : 'Upvote'} ({selectedPost.upvotes})
+                  </Button>
+                  <Button variant="outline"
+                    className="gap-2 bg-muted/40 hover:bg-muted border-border transition-all"
+                    onClick={() => handleShare(selectedPost)}>
+                    <Share2 className="h-4 w-4" /> Share
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-4 sm:hidden flex justify-center">
+                <Button variant="ghost" className="w-full rounded-xl border border-border/50 bg-background/50" 
+                  onClick={() => {
+                    setSelectedPost(null);
+                    if (shareCode) navigate("/community", { replace: true });
+                  }}>
+                  Close
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
