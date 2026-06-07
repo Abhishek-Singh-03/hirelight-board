@@ -73,11 +73,11 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
           </div>
 
           {/* Search Bar - Desktop */}
-          <div className="hidden md:flex flex-1 max-w-md mx-8">
+          <div className="hidden md:flex flex-1 max-w-[140px] lg:max-w-[240px] xl:max-w-md mx-2 xl:mx-8">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
               <Input
-                placeholder="Search jobs by title or location..."
+                placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => onSearchChange(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -87,8 +87,8 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
           </div>
 
           {/* Navigation */}
-          <div className="hidden md:flex items-center space-x-4">
-            <nav className="flex items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-2 xl:space-x-4">
+            <nav className="flex items-center space-x-1 xl:space-x-6">
               {navItems.map((item) => (
                 <a
                   key={item.name}
@@ -99,7 +99,7 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
                       handleNavClick(item.href);
                     }
                   }}
-                  className="text-sm font-medium text-muted-foreground hover:text-primary transition-all duration-200 relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left px-3 py-2 rounded-lg hover:bg-primary/5"
+                  className="text-xs xl:text-sm font-medium whitespace-nowrap text-muted-foreground hover:text-primary transition-all duration-200 relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left px-2 xl:px-3 py-2 rounded-lg hover:bg-primary/5"
                 >
                   {item.name}
                 </a>
@@ -115,18 +115,18 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
 
             {/* Auth Buttons */}
             {isAuthenticated ? (
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-primary text-sm font-semibold">
-                  <User className="h-3.5 w-3.5" />
-                  <span>{user?.name}</span>
-                  <span className="text-[10px] opacity-60 font-normal">({user?.role})</span>
+              <div className="flex items-center gap-1 xl:gap-2">
+                <div className="flex items-center gap-1.5 px-2 xl:px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs xl:text-sm font-semibold max-w-[100px] xl:max-w-full">
+                  <User className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{user?.name}</span>
+                  <span className="text-[10px] opacity-60 font-normal hidden xl:inline">({user?.role})</span>
                 </div>
-                <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-destructive" onClick={logout}>
-                  <LogOut className="h-4 w-4" /> Logout
+                <Button variant="ghost" size="sm" className="gap-1.5 px-2 xl:px-3 text-muted-foreground hover:text-destructive shrink-0" onClick={logout}>
+                  <LogOut className="h-4 w-4" /> <span className="hidden xl:inline">Logout</span>
                 </Button>
               </div>
             ) : (
-              <Button size="sm" className="gap-1.5 shadow-md shadow-primary/20" onClick={() => window.location.href = '/auth'}>
+              <Button size="sm" className="gap-1.5 shadow-md shadow-primary/20 shrink-0" onClick={() => window.location.href = '/auth'}>
                 <LogIn className="h-4 w-4" /> Sign In
               </Button>
             )}
