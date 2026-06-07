@@ -63,7 +63,7 @@ const Index = () => {
         if (jobTypesFilter.length > 0) queryParams.append("jobType", jobTypesFilter.join(","));
 
         // Connect directly to our new Dropwizard Backend with dynamic filters!
-        const endpoint = `http://localhost:8080/jobs?${queryParams.toString()}`;
+        const endpoint = `https://hirelight-api.onrender.com/jobs?${queryParams.toString()}`;
         const response = await fetch(endpoint);
         if (!response.ok) {
           throw new Error(`Failed to fetch jobs: ${response.status}`);

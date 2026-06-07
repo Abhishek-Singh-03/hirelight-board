@@ -39,7 +39,7 @@ const Dashboard = () => {
     // 2. Fetch Logged-in User Skills from MySQL
     const userId = user?.userId;
     if (userId) {
-      fetch(`http://localhost:8080/talent/${userId}`)
+      fetch(`https://hirelight-api.onrender.com/talent/${userId}`)
       .then(res => res.json())
       .then(user => {
         try {
@@ -117,7 +117,7 @@ const Dashboard = () => {
     };
 
     try {
-      const res = await fetch("http://localhost:8080/community", {
+      const res = await fetch("https://hirelight-api.onrender.com/community", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",

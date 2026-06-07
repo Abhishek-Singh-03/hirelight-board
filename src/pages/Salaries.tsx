@@ -18,7 +18,7 @@ interface Salary {
   date: string;
 }
 
-const API = "http://localhost:8080";
+const API = "https://hirelight-api.onrender.com";
 
 export default function Salaries() {
   const [salaries, setSalaries] = useState<Salary[]>([]);

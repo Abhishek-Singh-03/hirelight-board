@@ -59,7 +59,7 @@ const RecruiterDashboard = () => {
   useEffect(() => {
     // Fetch all candidates
     setLoadingCandidates(true);
-    fetch("http://localhost:8080/talent")
+    fetch("https://hirelight-api.onrender.com/talent")
       .then(res => res.json())
       .then(data => {
         const mapped = data.map((u: any) => {
@@ -91,7 +91,7 @@ const RecruiterDashboard = () => {
     if (!user) return;
     setLoadingMyJobs(true);
     const auth = JSON.parse(localStorage.getItem("hl_auth") || "{}");
-    fetch("http://localhost:8080/jobs/mine", {
+    fetch("https://hirelight-api.onrender.com/jobs/mine", {
       headers: { "Authorization": `Bearer ${auth.token}` }
     })
       .then(res => res.json())
@@ -113,7 +113,7 @@ const RecruiterDashboard = () => {
     setPosting(true);
     const auth = JSON.parse(localStorage.getItem("hl_auth") || "{}");
     try {
-      const res = await fetch("http://localhost:8080/jobs/post", {
+      const res = await fetch("https://hirelight-api.onrender.com/jobs/post", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${auth.token}` },
         body: JSON.stringify(jobForm)

@@ -31,7 +31,7 @@ const emptyForm = {
   salary: "", applyLink: "", category: "tech", description: "", type: "full-time"
 };
 
-const API = "http://localhost:8080";
+const API = "https://hirelight-api.onrender.com";
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 

@@ -21,7 +21,7 @@ export interface ExperiencePost {
   shareCode?: string;
 }
 
-const API = "http://localhost:8080";
+const API = "https://hirelight-api.onrender.com";
 
 export default function Community() {
   const { shareCode } = useParams<{ shareCode: string }>();
