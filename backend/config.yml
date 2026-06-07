@@ -13,5 +13,3 @@ database:
   checkConnectionWhileIdle: false
   evictionInterval: 10s
   minIdleTime: 1 minute
-
-jwtTokenSecret: ${JWT_SECRET:-"super_secret_key_change_me_in_production_12345678901234567890"}
