@@ -1,33 +1,31 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { MapPin, Calendar, Building2, Code, Briefcase, GraduationCap, Users, DollarSign, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { Building2, Code, GraduationCap, MapPin, Users } from "lucide-react";
 
 interface FilterSidebarProps {
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
+  locationFilter: string;
+  onLocationChange: (loc: string) => void;
+  jobTypesFilter: string[];
+  onJobTypesChange: (types: string[]) => void;
+  onClearAll: () => void;
   jobStats: {
     total: number;
     remote: number;
     fresher: number;
     government: number;
   };
-  resumeText?: string;
-  onResumeChange?: (text: string) => void;
-  minLPA?: number;
-  onMinLPAChange?: (val: number) => void;
 }
 
-export function FilterSidebar({ selectedCategory, onCategoryChange, jobStats, resumeText, onResumeChange, minLPA, onMinLPAChange }: FilterSidebarProps) {
-  const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>([]);
-  const [selectedSalaryRange, setSelectedSalaryRange] = useState<string[]>([]);
-  const [selectedExperience, setSelectedExperience] = useState<string[]>([]);
-
+export function FilterSidebar({ 
+  selectedCategory, onCategoryChange, 
+  locationFilter, onLocationChange,
+  jobTypesFilter, onJobTypesChange,
+  onClearAll,
+  jobStats 
+}: FilterSidebarProps) {
   const categories = [
     { id: 'all', label: 'All Jobs', count: jobStats.total, icon: Building2 },
     { id: 'fresher', label: 'Fresher Jobs', count: jobStats.fresher, icon: GraduationCap },
@@ -37,121 +35,77 @@ export function FilterSidebar({ selectedCategory, onCategoryChange, jobStats, re
     { id: 'internship', label: 'Internships', count: Math.floor(jobStats.total * 0.15), icon: Users },
   ];
 
-  const jobTypes = [
-    { id: 'full-time', label: 'Full-time' },
-    { id: 'part-time', label: 'Part-time' },
-    { id: 'contract', label: 'Contract' },
-    { id: 'freelance', label: 'Freelance' },
-    { id: 'internship', label: 'Internship' },
-  ];
-
-  const salaryRanges = [
-    { id: 'entry', label: 'Entry Level (2-5 LPA)' },
-    { id: 'mid', label: 'Mid Level (5-10 LPA)' },
-    { id: 'senior', label: 'Senior Level (10-20 LPA)' },
-    { id: 'lead', label: 'Lead Level (20+ LPA)' },
-  ];
-
-  const experienceLevels = [
-    { id: 'fresher', label: 'Fresher (0-1 years)' },
-    { id: 'junior', label: 'Junior (1-3 years)' },
-    { id: 'mid', label: 'Mid Level (3-5 years)' },
-    { id: 'senior', label: 'Senior (5+ years)' },
-  ];
-
-  const handleCheckboxChange = (
-    value: string,
-    isChecked: boolean,
-    setState: React.Dispatch<React.SetStateAction<string[]>>
-  ) => {
-    setState(prev => 
-      isChecked 
-        ? [...prev, value]
-        : prev.filter(item => item !== value)
-    );
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Categories */}
-      <Card className="border-2 border-primary/10 shadow-lg shadow-primary/5">
-        <CardHeader>
-          <CardTitle className="text-sm font-medium flex items-center">
-            <Building2 className="h-4 w-4 mr-2" />
-            Job Categories
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {categories.map((category) => (
-            <Button
-              key={category.id}
-              variant={selectedCategory === category.id ? "default" : "ghost"}
-              className="w-full justify-between h-auto p-3 hover:bg-primary/5 transition-colors duration-200"
-              onClick={() => onCategoryChange(category.id)}
-            >
-              <div className="flex items-center space-x-2">
-                <category.icon className="h-4 w-4" />
-                <span className="text-sm">{category.label}</span>
+    <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto overflow-x-hidden pr-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="relative group rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 overflow-hidden backdrop-blur-sm transition-all duration-300 hover:border-zinc-700">
+        <div className="absolute top-0 left-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -ml-10 -mt-10 pointer-events-none" />
+        
+        <div className="relative z-10">
+          
+          {/* Master Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="2" x2="6" y1="14" y2="14"/><line x1="10" x2="14" y1="8" y2="8"/><line x1="18" x2="22" y1="16" y2="16"/></svg>
               </div>
-              <Badge variant="secondary" className="ml-auto">
-                {category.count}
-              </Badge>
-            </Button>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Blind Salary Barrier */}
-      {onMinLPAChange && (
-        <Card className="border-2 border-destructive/20 shadow-lg shadow-destructive/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center text-destructive">
-              <span className="text-lg mr-2">🛑</span>
-              My Minimum Worth
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground mb-4">
-              Set your absolute minimum threshold. Jobs below this salary will be locked out so you don't waste your time!
-            </p>
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold">₹</span>
-              <Input 
-                type="number" 
-                placeholder="e.g. 5"
-                className="w-20 bg-background/50 text-center font-bold"
-                value={minLPA || ''}
-                onChange={(e) => onMinLPAChange(Number(e.target.value) || 0)}
-              />
-              <span className="text-sm font-semibold">LPA +</span>
+              <h2 className="font-bold text-white text-base tracking-wide">Filters</h2>
             </div>
-          </CardContent>
-        </Card>
-      )}
+            <button onClick={onClearAll} className="text-xs text-primary hover:text-primary/80 transition-colors font-medium">Clear All</button>
+          </div>
 
-      {/* AI Resume Matcher */}
-      {onResumeChange && (
-        <Card className="border-2 border-primary/20 shadow-[0_0_15px_-5px_var(--primary)] bg-gradient-to-b from-card to-primary/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center text-primary">
-              <Sparkles className="h-4 w-4 mr-2" />
-              Smart Resume Match
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground mb-3">
-              Paste your resume text here. We'll instantly score jobs based on your skills!
-            </p>
-            <Textarea 
-              placeholder="E.g., Experienced React developer with Node.js and TypeScript..."
-              className="resize-none h-32 bg-background/50 border-primary/20 focus-visible:ring-primary"
-              value={resumeText}
-              onChange={(e) => onResumeChange(e.target.value)}
+          {/* Categories Section */}
+          <div className="mb-3 flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-zinc-500" />
+            <h3 className="font-semibold text-zinc-300 text-sm">Categories</h3>
+          </div>
+          <div className="space-y-1.5">
+            {categories.map((category) => {
+              const isSelected = selectedCategory === category.id;
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => onCategoryChange(category.id)}
+                  className={`w-full flex items-center justify-between p-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    isSelected 
+                      ? "bg-primary/20 text-primary border border-primary/20 shadow-sm" 
+                      : "text-zinc-400 border border-transparent hover:bg-zinc-800/50 hover:text-zinc-200"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <category.icon className={`h-4 w-4 ${isSelected ? "text-primary" : "text-zinc-500"}`} />
+                    <span>{category.label}</span>
+                  </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-md border ${
+                    isSelected 
+                      ? "bg-primary/10 border-primary/20 text-primary" 
+                      : "bg-zinc-950 border-zinc-800 text-zinc-500"
+                  }`}>
+                    {category.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="h-px w-full bg-zinc-800/80 my-6" />
+
+          {/* Location Filter */}
+          <div className="mb-3 flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-zinc-500" />
+            <h3 className="font-semibold text-zinc-300 text-sm">Location</h3>
+          </div>
+          <div className="px-2">
+            <input 
+              type="text" 
+              placeholder="e.g. Bangalore, Remote" 
+              className="w-full h-9 bg-zinc-950 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+              value={locationFilter}
+              onChange={(e) => onLocationChange(e.target.value)}
             />
-          </CardContent>
-        </Card>
-      )}
+          </div>
 
+        </div>
+      </div>
     </div>
   );
 }

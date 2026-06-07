@@ -82,17 +82,7 @@ export function Footer() {
             <div className="text-sm text-muted-foreground">
               © {currentYear} JobWise. All rights reserved.
             </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm">
-                Privacy Policy
-              </Button>
-              <Button variant="ghost" size="sm">
-                Terms of Service
-              </Button>
-              <Button variant="ghost" size="sm">
-                Cookie Policy
-              </Button>
-            </div>
+
           </div>
         </div>
       </div>

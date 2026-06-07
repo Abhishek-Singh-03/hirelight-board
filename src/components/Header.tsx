@@ -1,8 +1,9 @@
-import { Search, Menu, X } from "lucide-react";
+import { Search, Menu, X, LogIn, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import ThemeToggle from "@/components/ThemeToggle";
+
 import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import logo from "@/assets/logo.png";
 
 interface HeaderProps {
@@ -14,6 +15,7 @@ interface HeaderProps {
 export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [streak, setStreak] = useState(0);
+  const { user, logout, isAuthenticated, isRecruiter } = useAuth();
 
   useEffect(() => {
     const loadStreak = () => {
@@ -39,12 +41,13 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
   };
 
   const navItems = [
-    { name: 'Home', href: '/' },
-    { name: 'Jobs', href: '/#jobs' },
-    { name: 'My Board 📌', href: '/dashboard' },
-    { name: 'For Recruiters 🏢', href: '/talent' },
-    { name: 'Community 💬', href: '/community' },
-  ];
+    { name: 'Home', href: '/', show: true },
+    { name: 'Jobs', href: '/#jobs', show: !isRecruiter },
+    { name: 'Salaries 💰', href: '/salaries', show: true },
+    { name: 'My Board 📌', href: '/dashboard', show: isAuthenticated && !isRecruiter },
+    { name: 'Find Talent 🏢', href: '/talent', show: isAuthenticated && isRecruiter },
+    { name: 'Community 💬', href: '/community', show: true },
+  ].filter(item => item.show);
 
   const handleNavClick = (href: string) => {
     if (href === '/#jobs' && window.location.pathname === '/') {
@@ -110,8 +113,25 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
               </div>
             )}
 
-            {/* Theme Toggle */}
-            <ThemeToggle />
+            {/* Auth Buttons */}
+            {isAuthenticated ? (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-primary text-sm font-semibold">
+                  <User className="h-3.5 w-3.5" />
+                  <span>{user?.name}</span>
+                  <span className="text-[10px] opacity-60 font-normal">({user?.role})</span>
+                </div>
+                <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-destructive" onClick={logout}>
+                  <LogOut className="h-4 w-4" /> Logout
+                </Button>
+              </div>
+            ) : (
+              <Button size="sm" className="gap-1.5 shadow-md shadow-primary/20" onClick={() => window.location.href = '/auth'}>
+                <LogIn className="h-4 w-4" /> Sign In
+              </Button>
+            )}
+
+
           </div>
 
           {/* Mobile Menu Button */}
@@ -152,11 +172,7 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
                 </a>
               ))}
               
-              {/* Mobile Theme Toggle */}
-              <div className="flex items-center justify-between px-4 py-3">
-                <span className="text-sm font-medium text-muted-foreground">Theme</span>
-                <ThemeToggle />
-              </div>
+
             </nav>
           </div>
         )}

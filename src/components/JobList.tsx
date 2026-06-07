@@ -26,28 +26,8 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 6;
 
-  // Filter jobs
-  const filteredJobs = jobs.filter((job) => {
-    const matchesSearch =
-      !searchTerm ||
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.location.toLowerCase().includes(searchTerm.toLowerCase());
-
-    // Normalize and match category (handles comma, slash, etc.)
-    const normalize = (str: string) =>
-      str.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-
-    const selectedCatNorm = normalize(selectedCategory);
-    const jobCatNorm = normalize(job.category);
-
-    const matchesCategory =
-      selectedCategory === "all" ||
-      jobCatNorm.split(" ").includes(selectedCatNorm) ||
-      jobCatNorm.includes(selectedCatNorm);
-
-    return matchesSearch && matchesCategory;
-  });
+  // All filtering is now handled natively by the Java Dropwizard backend!
+  const filteredJobs = jobs;
 
   // Pagination logic
   const indexOfLastJob = currentPage * jobsPerPage;
@@ -161,17 +141,17 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
 
       {/* Job Cards */}
       {isSwipeMode ? (
-        <div className="flex justify-center items-center py-12 px-4 h-[600px]">
+        <div className="flex justify-center items-center py-12 px-4 min-h-[600px]">
           {currentSwipeIndex < jobsToShow.length ? (
-            <div className="w-full max-w-md relative">
+            <div className="w-full max-w-2xl relative transform transition-all duration-300">
               {(() => {
                 const job = jobsToShow[currentSwipeIndex];
                 let matchScore: number | undefined = undefined;
                 if (resumeText && resumeText.trim().length > 10) {
-                  const rWords = resumeText.toLowerCase().match(/\b\w{4,}\b/g) || [];
-                  const jWords = `${job.title} ${job.description || ''} ${job.category}`.toLowerCase().match(/\b\w{4,}\b/g) || [];
+                  const rWords = (resumeText.toLowerCase().match(/\b\w{4,}\b/g) || []) as string[];
+                  const jWords = (`${job.title} ${job.description || ''} ${job.category}`).toLowerCase().match(/\b\w{4,}\b/g) || [];
                   if (jWords.length > 0) {
-                    const uniqueJ = [...new Set(jWords)];
+                    const uniqueJ = [...new Set(jWords)] as string[];
                     const intersection = uniqueJ.filter(w => rWords.includes(w));
                     matchScore = Math.min(100, Math.round((intersection.length / uniqueJ.length) * 200 + 30)); 
                   } else {
@@ -237,15 +217,15 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
           )}
         </div>
       ) : (
-        <div className="grid gap-6">
+        <div className="grid gap-6 min-w-0">
           {jobsToShow.map((job) => {
             // Calculate match score
             let matchScore: number | undefined = undefined;
             if (resumeText && resumeText.trim().length > 10) {
-              const rWords = resumeText.toLowerCase().match(/\b\w{4,}\b/g) || [];
-              const jWords = `${job.title} ${job.description || ''} ${job.category}`.toLowerCase().match(/\b\w{4,}\b/g) || [];
+              const rWords = (resumeText.toLowerCase().match(/\b\w{4,}\b/g) || []) as string[];
+              const jWords = (`${job.title} ${job.description || ''} ${job.category}`).toLowerCase().match(/\b\w{4,}\b/g) || [];
               if (jWords.length > 0) {
-                const uniqueJ = [...new Set(jWords)];
+                const uniqueJ = [...new Set(jWords)] as string[];
                 const intersection = uniqueJ.filter(w => rWords.includes(w));
                 matchScore = Math.min(100, Math.round((intersection.length / uniqueJ.length) * 200 + 30)); // fake boost for demo
               } else {
@@ -263,7 +243,7 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
             }
 
             return (
-              <div key={job.id}>
+              <div key={job.id} className="min-w-0 overflow-hidden">
                 <JobCard job={job} onClick={() => onJobClick(job)} matchScore={matchScore} isLocked={isLocked} />
               </div>
             );
@@ -272,8 +252,9 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
       )}
 
       {/* Pagination Controls */}
-      <div className="flex justify-center items-center gap-2 pt-6 flex-wrap overflow-x-auto">
-        <Button
+      {!isSwipeMode && totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 pt-6 flex-wrap overflow-x-auto">
+          <Button
           variant="outline"
           size="sm"
           disabled={currentPage === 1}
@@ -340,7 +321,8 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
         >
           Next
         </Button>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

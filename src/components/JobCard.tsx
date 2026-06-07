@@ -29,9 +29,11 @@ interface JobCardProps {
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
   isLocked?: boolean;
+  hideTrackButton?: boolean;
+  disableSwipe?: boolean;
 }
 
-export function JobCard({ job, onClick, matchScore, onSwipeLeft, onSwipeRight, isLocked }: JobCardProps) {
+export function JobCard({ job, onClick, matchScore, onSwipeLeft, onSwipeRight, isLocked, hideTrackButton, disableSwipe }: JobCardProps) {
   const controls = useAnimation();
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-250, 0, 250], [-6, 0, 6]); // tilt left and right
@@ -40,6 +42,17 @@ export function JobCard({ job, onClick, matchScore, onSwipeLeft, onSwipeRight, i
   const [isDragging, setIsDragging] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const { toast } = useToast();
+
+  // Decode HTML entities from synced job descriptions (e.g. &lt; &#39; &amp;)
+  const decodeHtml = (text: string): string => {
+    if (!text) return '';
+    return text
+      .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ').replace(/&#\d+;/g, '')
+      .replace(/<[^>]*>/g, '') // strip any remaining HTML tags
+      .replace(/\s+/g, ' ').trim();
+  };
 
   const handleApplyClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -145,12 +158,13 @@ Best regards,
 
   return (
     <motion.div
-      drag="x"
+      drag={disableSwipe ? false : "x"}
       dragConstraints={{ left: -250, right: 250 }} 
       dragElastic={0.12}
       style={{ x, rotate }}
       onDragStart={() => setIsDragging(true)}
       onDragEnd={(_, info) => {
+        if (disableSwipe) return;
         setIsDragging(false);
         const offsetX = info.offset.x;
         const velocityX = info.velocity.x;
@@ -187,7 +201,7 @@ Best regards,
         }
       }}
       animate={controls}
-      className="cursor-grab active:cursor-grabbing w-full"
+      className={`w-full ${disableSwipe ? '' : 'cursor-grab active:cursor-grabbing'}`}
     >
       <Card
         className={`group relative overflow-hidden glass glass-hover transition-all duration-500 rounded-2xl ${isLocked ? 'blur-[4px] grayscale select-none opacity-80 pointer-events-none' : ''}`}
@@ -205,18 +219,22 @@ Best regards,
         
         <CardContent className="p-6 relative z-10 w-full h-full">
           {/* hint when dragging left */}
-          <motion.span
-            style={{ opacity: applyOpacity }}
-            className="absolute right-4 top-4 text-xs font-semibold px-2 py-1 rounded-md bg-destructive/10 text-destructive border border-destructive/20 pointer-events-none z-20"
-          >
-            ← Pass
-          </motion.span>
-          <motion.span
-            style={{ opacity: saveOpacity }}
-            className="absolute left-4 top-4 text-xs font-semibold px-2 py-1 rounded-md bg-success/10 text-success border border-success/20 pointer-events-none z-20"
-          >
-            Save →
-          </motion.span>
+          {!disableSwipe && (
+            <>
+              <motion.span
+                style={{ opacity: applyOpacity }}
+                className="absolute right-4 top-4 text-xs font-semibold px-2 py-1 rounded-md bg-destructive/10 text-destructive border border-destructive/20 pointer-events-none z-20"
+              >
+                ← Pass
+              </motion.span>
+              <motion.span
+                style={{ opacity: saveOpacity }}
+                className="absolute left-4 top-4 text-xs font-semibold px-2 py-1 rounded-md bg-success/10 text-success border border-success/20 pointer-events-none z-20"
+              >
+                Save →
+              </motion.span>
+            </>
+          )}
 
           <div className="space-y-4">
             {/* Header */}
@@ -330,7 +348,11 @@ Best regards,
           </div>
 
             {/* Description Preview */}
-            {job.description && <p className="text-sm text-muted-foreground line-clamp-2">{job.description}</p>}
+            {job.description && (
+              <p className="text-sm text-muted-foreground line-clamp-2 break-words overflow-hidden">
+                {decodeHtml(job.description)}
+              </p>
+            )}
 
             {/* Actions: Apply and Save */}
             <div className="pt-4 flex gap-3">
@@ -342,37 +364,39 @@ Best regards,
                 Quick Apply
               </Button>
               
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Simple localStorage save
-                  const saved = JSON.parse(localStorage.getItem('savedJobs') || '[]');
-                  if(!saved.find((s: Job) => s.id === job.id)) {
-                    saved.push(job);
-                    localStorage.setItem('savedJobs', JSON.stringify(saved));
-                    toast({title: "Job Saved!", description: "Added to your tracker board."});
+              {!hideTrackButton && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Simple localStorage save
+                    const saved = JSON.parse(localStorage.getItem('savedJobs') || '[]');
+                    if(!saved.find((s: Job) => s.id === job.id)) {
+                      saved.push(job);
+                      localStorage.setItem('savedJobs', JSON.stringify(saved));
+                      toast({title: "Job Saved!", description: "Added to your tracker board."});
 
-                    // Hustle Streak Logic
-                    const today = new Date().toDateString();
-                    const streakData = JSON.parse(localStorage.getItem('hustleStreak') || '{"count": 0, "lastDate": ""}');
-                    if (streakData.lastDate !== today) {
-                       const yesterday = new Date(Date.now() - 86400000).toDateString();
-                       const isConsecutive = streakData.lastDate === yesterday;
-                       streakData.count = isConsecutive ? streakData.count + 1 : 1;
-                       streakData.lastDate = today;
-                       localStorage.setItem('hustleStreak', JSON.stringify(streakData));
-                       window.dispatchEvent(new Event('hustle-streak-updated'));
+                      // Hustle Streak Logic
+                      const today = new Date().toDateString();
+                      const streakData = JSON.parse(localStorage.getItem('hustleStreak') || '{"count": 0, "lastDate": ""}');
+                      if (streakData.lastDate !== today) {
+                        const yesterday = new Date(Date.now() - 86400000).toDateString();
+                        const isConsecutive = streakData.lastDate === yesterday;
+                        streakData.count = isConsecutive ? streakData.count + 1 : 1;
+                        streakData.lastDate = today;
+                        localStorage.setItem('hustleStreak', JSON.stringify(streakData));
+                        window.dispatchEvent(new Event('hustle-streak-updated'));
+                      }
+                    } else {
+                      toast({title: "Already Saved", description: "This job is already in your tracker."});
                     }
-                  } else {
-                    toast({title: "Already Saved", description: "This job is already in your tracker."});
-                  }
-                }}
-                className="bg-secondary hover:bg-white/10 transition-all border border-white/5"
-                variant="outline"
-              >
-                <Badge className="mr-2 bg-white/10 hover:bg-white/20 text-foreground">Track</Badge> 
-                📌
-              </Button>
+                  }}
+                  className="bg-secondary hover:bg-white/10 transition-all border border-white/5"
+                  variant="outline"
+                >
+                  <Badge className="mr-2 bg-white/10 hover:bg-white/20 text-foreground">Track</Badge> 
+                  📌
+                </Button>
+              )}
 
               <Button
                 onClick={generateCoverLetter}

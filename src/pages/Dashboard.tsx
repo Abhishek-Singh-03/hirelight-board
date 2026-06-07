@@ -4,16 +4,16 @@ import { Footer } from "@/components/Footer";
 import { JobCard, Job } from "@/components/JobCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, TrendingUp } from "lucide-react";
+import { Trash2, TrendingUp, Eye, EyeOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Textarea } from "@/components/ui/textarea";
-
 import confetti from "canvas-confetti";
 
 type TrackedJob = Job & { status?: 'tracked' | 'interviewing' | 'offer' };
 
-const radarData = [
+const defaultRadarData = [
   { subject: 'React / Frontend', me: 85, ideal: 90, fullMark: 100 },
   { subject: 'Backend / APIs', me: 40, ideal: 70, fullMark: 100 },
   { subject: 'System Design', me: 20, ideal: 60, fullMark: 100 },
@@ -26,11 +26,40 @@ const Dashboard = () => {
   const [savedJobs, setSavedJobs] = useState<TrackedJob[]>([]);
   const [showOfferModal, setShowOfferModal] = useState<TrackedJob | null>(null);
   const [experienceText, setExperienceText] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [radarData, setRadarData] = useState(defaultRadarData);
+  const [activeMobileTab, setActiveMobileTab] = useState<'tracked' | 'interviewing' | 'offer'>('tracked');
+  const { user } = useAuth();
 
   useEffect(() => {
+    // 1. Fetch Saved Jobs from localStorage
     const jobs = JSON.parse(localStorage.getItem("savedJobs") || "[]");
     setSavedJobs(jobs);
-  }, []);
+
+    // 2. Fetch Logged-in User Skills from MySQL
+    const userId = user?.userId;
+    if (userId) {
+      fetch(`http://localhost:8080/talent/${userId}`)
+      .then(res => res.json())
+      .then(user => {
+        try {
+          const parsedSkills = JSON.parse(user.skills);
+          if (parsedSkills && Object.keys(parsedSkills).length > 0) {
+             const dynamicRadar = Object.keys(parsedSkills).map(subject => ({
+               subject,
+               me: parsedSkills[subject],
+               ideal: Math.floor(Math.random() * 30) + 70, // Generate a mock ideal score for comparison
+               fullMark: 100
+             }));
+             setRadarData(dynamicRadar);
+          }
+        } catch(e) {
+          // Keep default if user has no JSON skills in DB yet
+        }
+      })
+      .catch(err => console.error("Failed to fetch user skills", err));
+    }
+  }, [user]);
 
   const handleRemove = (jobId: string) => {
     const updated = savedJobs.filter((j) => j.id !== jobId);
@@ -43,11 +72,7 @@ const Dashboard = () => {
     window.open(job.applyLink, "_blank");
   };
 
-  const handleDrop = (e: React.DragEvent, status: 'tracked' | 'interviewing' | 'offer') => {
-    e.preventDefault();
-    const jobId = e.dataTransfer.getData("jobId");
-    
-    // Play confetti if dropped into Offer!
+  const moveJob = (jobId: string, status: 'tracked' | 'interviewing' | 'offer') => {
     if (status === 'offer') {
       confetti({
         particleCount: 150,
@@ -55,35 +80,64 @@ const Dashboard = () => {
         origin: { y: 0.6 },
         colors: ['#4ade80', '#22c55e', '#16a34a']
       });
-      // Delay showing the modal slightly for maximum confetti impact
       const job = savedJobs.find(j => j.id === jobId);
       if (job) {
         setTimeout(() => setShowOfferModal(job), 1500);
       }
     }
-
     const updated = savedJobs.map(j => j.id === jobId ? { ...j, status } : j);
     setSavedJobs(updated);
     localStorage.setItem("savedJobs", JSON.stringify(updated));
   };
 
-  const submitExperience = () => {
+  const handleDrop = (e: React.DragEvent, status: 'tracked' | 'interviewing' | 'offer') => {
+    e.preventDefault();
+    const jobId = e.dataTransfer.getData("jobId");
+    moveJob(jobId, status);
+  };
+
+  const submitExperience = async () => {
     if (!showOfferModal) return;
-    const currentList = JSON.parse(localStorage.getItem('experiences') || '[]');
-    const newExp = {
-      id: Math.random().toString(36).substr(2, 9),
+    
+    if (experienceText.trim().length < 50) {
+      toast({ title: "Too short", description: "Please write at least 50 characters to help others!", variant: "destructive" });
+      return;
+    }
+
+    const authRaw = localStorage.getItem("hl_auth");
+    if (!authRaw) return;
+    const auth = JSON.parse(authRaw);
+
+    const payload = {
       jobTitle: showOfferModal.title,
       company: showOfferModal.company || "Unknown Company",
-      author: "Anonymous User",
-      text: experienceText || "It was a great experience, highly recommend using the STAR method!",
-      date: "Just now",
-      upvotes: 0,
-      type: "offer"
+      text: experienceText.trim(),
+      type: "offer",
+      anonymous: isAnonymous
     };
-    localStorage.setItem('experiences', JSON.stringify([newExp, ...currentList]));
-    setShowOfferModal(null);
-    setExperienceText("");
-    toast({ title: "Posted to Community!", description: "Thank you for helping other developers." });
+
+    try {
+      const res = await fetch("http://localhost:8080/community", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${auth.token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed");
+      }
+
+      setShowOfferModal(null);
+      setExperienceText("");
+      setIsAnonymous(false);
+      toast({ title: "Posted to Community!", description: "Thank you for helping other developers." });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Could not post to community. Try again later.", variant: "destructive" });
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -158,10 +212,36 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* COLUMN 1: TRACKED */}
-            <div 
-              className="space-y-6 min-h-[500px] p-4 rounded-2xl bg-secondary/10 border border-secondary/20"
+          <>
+            {/* Mobile Tabs */}
+            <div className="lg:hidden flex overflow-x-auto gap-2 pb-4 mb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <Button 
+                variant={activeMobileTab === 'tracked' ? 'default' : 'outline'} 
+                onClick={() => setActiveMobileTab('tracked')}
+                className="rounded-full shrink-0 shadow-sm"
+              >
+                Saved ({tracked.length})
+              </Button>
+              <Button 
+                variant={activeMobileTab === 'interviewing' ? 'default' : 'outline'} 
+                onClick={() => setActiveMobileTab('interviewing')}
+                className="rounded-full shrink-0 shadow-sm"
+              >
+                Interviewing ({interviewing.length})
+              </Button>
+              <Button 
+                variant={activeMobileTab === 'offer' ? 'default' : 'outline'} 
+                onClick={() => setActiveMobileTab('offer')}
+                className="rounded-full shrink-0 shadow-sm"
+              >
+                Offers ({offers.length})
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* COLUMN 1: TRACKED */}
+              <div 
+                className={`space-y-6 min-h-[500px] p-4 rounded-2xl bg-secondary/10 border border-secondary/20 ${activeMobileTab !== 'tracked' ? 'hidden lg:block' : ''}`}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'tracked')}
             >
@@ -176,7 +256,10 @@ const Dashboard = () => {
                   draggable
                   onDragStart={(e) => e.dataTransfer.setData("jobId", job.id)}
                 >
-                  <JobCard job={job} onClick={() => handleApplyClick(job)} />
+                  <JobCard job={job} onClick={() => handleApplyClick(job)} hideTrackButton={true} disableSwipe={true} />
+                  <div className="lg:hidden mt-2 flex gap-2">
+                    <Button variant="outline" size="sm" className="w-full text-xs font-semibold" onClick={() => moveJob(job.id, 'interviewing')}>Move to Interviewing ➔</Button>
+                  </div>
                   <Button
                     variant="destructive"
                     size="icon"
@@ -199,7 +282,7 @@ const Dashboard = () => {
             
             {/* COLUMN 2: INTERVIEWING */}
             <div 
-              className="space-y-6 min-h-[500px] p-4 rounded-2xl bg-yellow-500/5 border border-yellow-500/20"
+              className={`space-y-6 min-h-[500px] p-4 rounded-2xl bg-yellow-500/5 border border-yellow-500/20 ${activeMobileTab !== 'interviewing' ? 'hidden lg:block' : ''}`}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'interviewing')}
             >
@@ -214,7 +297,11 @@ const Dashboard = () => {
                   draggable
                   onDragStart={(e) => e.dataTransfer.setData("jobId", job.id)}
                 >
-                  <JobCard job={job} onClick={() => handleApplyClick(job)} />
+                  <JobCard job={job} onClick={() => handleApplyClick(job)} hideTrackButton={true} disableSwipe={true} />
+                  <div className="lg:hidden mt-2 flex gap-2">
+                    <Button variant="outline" size="sm" className="w-full text-xs font-semibold" onClick={() => moveJob(job.id, 'tracked')}>⬅ Back</Button>
+                    <Button variant="outline" size="sm" className="w-full text-xs font-semibold text-green-500 border-green-500/20" onClick={() => moveJob(job.id, 'offer')}>Got Offer! ➔</Button>
+                  </div>
                   <Button
                     variant="default"
                     size="sm"
@@ -245,7 +332,7 @@ const Dashboard = () => {
 
             {/* COLUMN 3: OFFERS */}
             <div 
-              className="space-y-6 min-h-[500px] p-4 rounded-2xl bg-green-500/5 border border-green-500/20"
+              className={`space-y-6 min-h-[500px] p-4 rounded-2xl bg-green-500/5 border border-green-500/20 ${activeMobileTab !== 'offer' ? 'hidden lg:block' : ''}`}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'offer')}
             >
@@ -260,7 +347,10 @@ const Dashboard = () => {
                   draggable
                   onDragStart={(e) => e.dataTransfer.setData("jobId", job.id)}
                 >
-                  <JobCard job={job} onClick={() => handleApplyClick(job)} />
+                  <JobCard job={job} onClick={() => handleApplyClick(job)} hideTrackButton={true} disableSwipe={true} />
+                  <div className="lg:hidden mt-2 flex gap-2">
+                    <Button variant="outline" size="sm" className="w-full text-xs font-semibold" onClick={() => moveJob(job.id, 'interviewing')}>⬅ Back to Interview</Button>
+                  </div>
                   <Button
                     variant="destructive"
                     size="icon"
@@ -281,6 +371,7 @@ const Dashboard = () => {
               )}
             </div>
           </div>
+          </>
         )}
 
         {/* Give Back Modal Overlay */}
@@ -296,16 +387,47 @@ const Dashboard = () => {
                   </p>
                 </div>
                 
-                <Textarea 
-                  placeholder="e.g. Round 1: React concepts. Round 2: System Design. They focused heavily on WebSockets..."
-                  className="h-32 resize-none bg-background/50 focus-visible:ring-primary"
-                  value={experienceText}
-                  onChange={(e) => setExperienceText(e.target.value)}
-                />
+                <div className="space-y-1">
+                  <Textarea 
+                    placeholder="Walk us through your interview process — rounds, topics asked, salary offered, tips for others..."
+                    className="h-32 resize-none bg-background/50 focus-visible:ring-primary"
+                    value={experienceText}
+                    onChange={(e) => setExperienceText(e.target.value)}
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>min 50 chars</span>
+                    <span>{experienceText.length} / 5000</span>
+                  </div>
+                </div>
 
-                <div className="flex gap-3">
+                <div 
+                  onClick={() => setIsAnonymous(v => !v)}
+                  className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all select-none ${
+                    isAnonymous 
+                      ? 'bg-primary/10 border-primary/40' 
+                      : 'bg-background/30 border-border hover:border-primary/30'
+                  }`}
+                >
+                  <div className={`flex items-center justify-center h-8 w-8 rounded-lg transition-all ${
+                    isAnonymous ? 'bg-primary/20 text-primary' : 'bg-muted/40 text-muted-foreground'
+                  }`}>
+                    {isAnonymous ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm">
+                      {isAnonymous ? 'Posting Anonymously' : 'Post with your name'}
+                    </p>
+                  </div>
+                  <div className={`h-4 w-8 rounded-full transition-all flex items-center px-0.5 ${
+                    isAnonymous ? 'bg-primary justify-end' : 'bg-muted justify-start'
+                  }`}>
+                    <div className="h-3 w-3 rounded-full bg-white shadow" />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
                   <Button variant="outline" className="w-full" onClick={() => setShowOfferModal(null)}>Skip for now</Button>
-                  <Button className="w-full font-bold" onClick={submitExperience}>Post to Community 💬</Button>
+                  <Button className="w-full font-bold" onClick={submitExperience}>Post {isAnonymous ? 'Anonymously' : 'to Community'}</Button>
                 </div>
               </CardContent>
             </Card>
