@@ -10,6 +10,7 @@ import {
   Tag, MapPin, Briefcase, Eye, RefreshCw, Lock, Mail,
   Trash2, Pencil, Check, BarChart3, Users, FileText, Package, Download
 } from "lucide-react";
+import { API_BASE_URL } from "@/lib/api";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ const emptyForm = {
   salary: "", applyLink: "", category: "tech", description: "", type: "full-time"
 };
 
-const API = "https://hirelight-api.onrender.com";
+const API = API_BASE_URL;
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 

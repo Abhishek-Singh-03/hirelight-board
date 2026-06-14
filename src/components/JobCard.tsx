@@ -3,11 +3,15 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Building2, ExternalLink, Share2, Twitter, Facebook, Linkedin, Link, FileText } from "lucide-react";
+import { Calendar, MapPin, Building2, ExternalLink, Share2, Twitter, Facebook, Linkedin, Link, FileText, LogIn } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { motion, useAnimation, useMotionValue, useTransform } from "framer-motion";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { API_BASE_URL } from "@/lib/api";
 
 export interface Job {
   id: string;
@@ -42,6 +46,9 @@ export function JobCard({ job, onClick, matchScore, onSwipeLeft, onSwipeRight, i
   const [isDragging, setIsDragging] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const { toast } = useToast();
+  const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
 
   // Decode HTML entities from synced job descriptions (e.g. &lt; &#39; &amp;)
   const decodeHtml = (text: string): string => {
@@ -52,6 +59,12 @@ export function JobCard({ job, onClick, matchScore, onSwipeLeft, onSwipeRight, i
       .replace(/&nbsp;/g, ' ').replace(/&#\d+;/g, '')
       .replace(/<[^>]*>/g, '') // strip any remaining HTML tags
       .replace(/\s+/g, ' ').trim();
+  };
+
+  const handleCardClick = () => {
+    if (!isDragging && !isLocked) {
+      navigate(`/jobs/${job.id}`, { state: { job } });
+    }
   };
 
   const handleApplyClick = (e: React.MouseEvent) => {
@@ -182,6 +195,11 @@ Best regards,
             controls.set({ x: 0, opacity: 1 });
           });
         } else if (isRightSwipe && onSwipeRight) {
+          if (!isAuthenticated) {
+            controls.start({ x: 0, transition: { type: "spring", stiffness: 350, damping: 30 } });
+            setShowAuthDialog(true);
+            return;
+          }
           controls.start({ x: 1000, opacity: 0, transition: { duration: 0.35 } }).then(() => {
             onSwipeRight();
             controls.set({ x: 0, opacity: 1 });
@@ -204,8 +222,8 @@ Best regards,
       className={`w-full ${disableSwipe ? '' : 'cursor-grab active:cursor-grabbing'}`}
     >
       <Card
-        className={`group relative overflow-hidden glass glass-hover transition-all duration-500 rounded-2xl ${isLocked ? 'blur-[4px] grayscale select-none opacity-80 pointer-events-none' : ''}`}
-        onClick={!isDragging && !isLocked ? onClick : undefined}
+        className={`group relative overflow-hidden glass glass-hover transition-all duration-500 rounded-2xl ${isLocked ? 'blur-[4px] grayscale select-none opacity-80 pointer-events-none' : 'cursor-pointer'}`}
+        onClick={handleCardClick}
       >
         {isLocked && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/20 backdrop-blur-[2px]">
@@ -368,32 +386,49 @@ Best regards,
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
-                    // Simple localStorage save
-                    const saved = JSON.parse(localStorage.getItem('savedJobs') || '[]');
-                    if(!saved.find((s: Job) => s.id === job.id)) {
-                      saved.push(job);
-                      localStorage.setItem('savedJobs', JSON.stringify(saved));
-                      toast({title: "Job Saved!", description: "Added to your tracker board."});
-
-                      // Hustle Streak Logic
-                      const today = new Date().toDateString();
-                      const streakData = JSON.parse(localStorage.getItem('hustleStreak') || '{"count": 0, "lastDate": ""}');
-                      if (streakData.lastDate !== today) {
-                        const yesterday = new Date(Date.now() - 86400000).toDateString();
-                        const isConsecutive = streakData.lastDate === yesterday;
-                        streakData.count = isConsecutive ? streakData.count + 1 : 1;
-                        streakData.lastDate = today;
-                        localStorage.setItem('hustleStreak', JSON.stringify(streakData));
-                        window.dispatchEvent(new Event('hustle-streak-updated'));
-                      }
-                    } else {
-                      toast({title: "Already Saved", description: "This job is already in your tracker."});
+                    if (!isAuthenticated) {
+                      setShowAuthDialog(true);
+                      return;
                     }
+                    // Sync to Backend
+                    fetch(`${API_BASE_URL}/jobs/${job.id}/stage?status=SAVED`, {
+                      method: "POST",
+                      headers: {
+                        "Authorization": `Bearer ${user?.token}`
+                      }
+                    }).then(res => {
+                      if (!res.ok) throw new Error("Failed to save");
+                      
+                      // Fallback Local Storage
+                      const saved = JSON.parse(localStorage.getItem('savedJobs') || '[]');
+                      if(!saved.find((s: Job) => s.id === job.id)) {
+                        saved.push(job);
+                        localStorage.setItem('savedJobs', JSON.stringify(saved));
+                        toast({title: "Job Saved!", description: "Added to your tracker board."});
+
+                        // Hustle Streak Logic
+                        const today = new Date().toDateString();
+                        const streakData = JSON.parse(localStorage.getItem('hustleStreak') || '{"count": 0, "lastDate": ""}');
+                        if (streakData.lastDate !== today) {
+                          const yesterday = new Date(Date.now() - 86400000).toDateString();
+                          const isConsecutive = streakData.lastDate === yesterday;
+                          streakData.count = isConsecutive ? streakData.count + 1 : 1;
+                          streakData.lastDate = today;
+                          localStorage.setItem('hustleStreak', JSON.stringify(streakData));
+                          window.dispatchEvent(new Event('hustle-streak-updated'));
+                        }
+                      } else {
+                        toast({title: "Already Saved", description: "This job is already in your tracker."});
+                      }
+                    }).catch(err => {
+                      console.error("Failed to sync save:", err);
+                      toast({title: "Connection Error", description: "Could not save job to server. Please try again.", variant: "destructive"});
+                    });
                   }}
                   className="bg-secondary hover:bg-white/10 transition-all border border-white/5"
                   variant="outline"
                 >
-                  <Badge className="mr-2 bg-white/10 hover:bg-white/20 text-foreground">Track</Badge> 
+                  <Badge className="mr-2 bg-white/10 hover:bg-white/20 text-foreground">Save</Badge> 
                   📌
                 </Button>
               )}
@@ -410,6 +445,43 @@ Best regards,
             </div>
         </CardContent>
       </Card>
+
+      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <DialogContent className="sm:max-w-[420px] border border-border/85 shadow-2xl rounded-2xl bg-zinc-950/95 backdrop-blur-xl">
+          <DialogHeader className="space-y-3 pt-4">
+            <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/25">
+              <LogIn className="h-6 w-6 text-primary" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-center bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Save Job to Your Board
+            </DialogTitle>
+            <DialogDescription className="text-center text-zinc-400 text-sm leading-relaxed px-2">
+              Create a free account or sign in to save jobs, build your tracking board, and sync your applications across mobile and desktop.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-4 pb-4">
+            <Button
+              variant="outline"
+              className="flex-1 rounded-xl h-11 font-semibold border-zinc-800 hover:bg-zinc-900 transition-all"
+              onClick={() => {
+                setShowAuthDialog(false);
+                navigate("/auth?mode=login");
+              }}
+            >
+              Sign In
+            </Button>
+            <Button
+              className="flex-1 rounded-xl h-11 font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+              onClick={() => {
+                setShowAuthDialog(false);
+                navigate("/auth?mode=register");
+              }}
+            >
+              Create Account
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

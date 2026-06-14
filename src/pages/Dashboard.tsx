@@ -10,8 +10,10 @@ import { useAuth } from "@/context/AuthContext";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Textarea } from "@/components/ui/textarea";
 import confetti from "canvas-confetti";
+import { usePageSEO } from "@/lib/seo";
+import { API_BASE_URL } from "@/lib/api";
 
-type TrackedJob = Job & { status?: 'tracked' | 'interviewing' | 'offer' };
+type TrackedJob = Job & { status?: 'saved' | 'applied' | 'interviewing' | 'offer' | 'rejected' };
 
 const defaultRadarData = [
   { subject: 'React / Frontend', me: 85, ideal: 90, fullMark: 100 },
@@ -23,23 +25,48 @@ const defaultRadarData = [
 ];
 
 const Dashboard = () => {
+  usePageSEO({
+    title: "My Dashboard | HireLight",
+    description: "Track your job applications with a Kanban board. Move jobs from Saved to Applied to Offer. View your skill gap radar chart and share interview experiences.",
+  });
+
   const [savedJobs, setSavedJobs] = useState<TrackedJob[]>([]);
   const [showOfferModal, setShowOfferModal] = useState<TrackedJob | null>(null);
   const [experienceText, setExperienceText] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [radarData, setRadarData] = useState(defaultRadarData);
-  const [activeMobileTab, setActiveMobileTab] = useState<'tracked' | 'interviewing' | 'offer'>('tracked');
+  const [activeMobileTab, setActiveMobileTab] = useState<'saved' | 'applied' | 'interviewing' | 'offer' | 'rejected'>('saved');
   const { user } = useAuth();
 
   useEffect(() => {
-    // 1. Fetch Saved Jobs from localStorage
-    const jobs = JSON.parse(localStorage.getItem("savedJobs") || "[]");
-    setSavedJobs(jobs);
+    // 1. Fetch Saved Jobs from Backend
+    if (user?.token) {
+      fetch(`${API_BASE_URL}/jobs/tracked`, {
+        headers: { "Authorization": `Bearer ${user.token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        // Map status to lowercase for frontend board UI state
+        const mapped = data.map((j: any) => ({
+          ...j,
+          status: j.status ? j.status.toLowerCase() : "saved"
+        }));
+        setSavedJobs(mapped);
+      })
+      .catch(err => {
+        console.error("Failed to load tracked jobs from backend:", err);
+        const jobs = JSON.parse(localStorage.getItem("savedJobs") || "[]");
+        setSavedJobs(jobs);
+      });
+    } else {
+      const jobs = JSON.parse(localStorage.getItem("savedJobs") || "[]");
+      setSavedJobs(jobs);
+    }
 
     // 2. Fetch Logged-in User Skills from MySQL
     const userId = user?.userId;
     if (userId) {
-      fetch(`https://hirelight-api.onrender.com/talent/${userId}`)
+      fetch(`${API_BASE_URL}/talent/${userId}`)
       .then(res => res.json())
       .then(user => {
         try {
@@ -61,7 +88,21 @@ const Dashboard = () => {
     }
   }, [user]);
 
-  const handleRemove = (jobId: string) => {
+  const handleRemove = async (jobId: string) => {
+    if (user?.token) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/jobs/${jobId}/track`, {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${user.token}`
+          }
+        });
+        if (!res.ok) throw new Error("Failed to delete from server");
+      } catch (err) {
+        console.error("Job delete sync failed:", err);
+      }
+    }
+
     const updated = savedJobs.filter((j) => j.id !== jobId);
     setSavedJobs(updated);
     localStorage.setItem("savedJobs", JSON.stringify(updated));
@@ -72,7 +113,7 @@ const Dashboard = () => {
     window.open(job.applyLink, "_blank");
   };
 
-  const moveJob = (jobId: string, status: 'tracked' | 'interviewing' | 'offer') => {
+  const moveJob = async (jobId: string, status: 'saved' | 'applied' | 'interviewing' | 'offer' | 'rejected') => {
     if (status === 'offer') {
       confetti({
         particleCount: 150,
@@ -85,12 +126,29 @@ const Dashboard = () => {
         setTimeout(() => setShowOfferModal(job), 1500);
       }
     }
+
+    // Call Backend API to update status
+    if (user?.token) {
+      try {
+        const uppercaseStatus = status.toUpperCase();
+        const res = await fetch(`${API_BASE_URL}/jobs/${jobId}/stage?status=${uppercaseStatus}`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${user.token}`
+          }
+        });
+        if (!res.ok) throw new Error("Failed to update status on server");
+      } catch (err) {
+        console.error("Status update sync failed:", err);
+      }
+    }
+
     const updated = savedJobs.map(j => j.id === jobId ? { ...j, status } : j);
     setSavedJobs(updated);
     localStorage.setItem("savedJobs", JSON.stringify(updated));
   };
 
-  const handleDrop = (e: React.DragEvent, status: 'tracked' | 'interviewing' | 'offer') => {
+  const handleDrop = (e: React.DragEvent, status: 'saved' | 'applied' | 'interviewing' | 'offer' | 'rejected') => {
     e.preventDefault();
     const jobId = e.dataTransfer.getData("jobId");
     moveJob(jobId, status);
@@ -117,7 +175,7 @@ const Dashboard = () => {
     };
 
     try {
-      const res = await fetch("https://hirelight-api.onrender.com/community", {
+      const res = await fetch(`${API_BASE_URL}/community`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -144,9 +202,11 @@ const Dashboard = () => {
     e.preventDefault();
   };
 
-  const tracked = savedJobs.filter(j => !j.status || j.status === 'tracked');
+  const saved = savedJobs.filter(j => !j.status || j.status === 'saved');
+  const applied = savedJobs.filter(j => j.status === 'applied');
   const interviewing = savedJobs.filter(j => j.status === 'interviewing');
   const offers = savedJobs.filter(j => j.status === 'offer');
+  const rejected = savedJobs.filter(j => j.status === 'rejected');
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -216,11 +276,18 @@ const Dashboard = () => {
             {/* Mobile Tabs */}
             <div className="lg:hidden flex overflow-x-auto gap-2 pb-4 mb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <Button 
-                variant={activeMobileTab === 'tracked' ? 'default' : 'outline'} 
-                onClick={() => setActiveMobileTab('tracked')}
+                variant={activeMobileTab === 'saved' ? 'default' : 'outline'} 
+                onClick={() => setActiveMobileTab('saved')}
                 className="rounded-full shrink-0 shadow-sm"
               >
-                Saved ({tracked.length})
+                Saved ({saved.length})
+              </Button>
+              <Button 
+                variant={activeMobileTab === 'applied' ? 'default' : 'outline'} 
+                onClick={() => setActiveMobileTab('applied')}
+                className="rounded-full shrink-0 shadow-sm"
+              >
+                Applied ({applied.length})
               </Button>
               <Button 
                 variant={activeMobileTab === 'interviewing' ? 'default' : 'outline'} 
@@ -236,141 +303,234 @@ const Dashboard = () => {
               >
                 Offers ({offers.length})
               </Button>
+              <Button 
+                variant={activeMobileTab === 'rejected' ? 'default' : 'outline'} 
+                onClick={() => setActiveMobileTab('rejected')}
+                className="rounded-full shrink-0 shadow-sm"
+              >
+                Rejected ({rejected.length})
+              </Button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* COLUMN 1: TRACKED */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+              {/* COLUMN 1: SAVED */}
               <div 
-                className={`space-y-6 min-h-[500px] p-4 rounded-2xl bg-secondary/10 border border-secondary/20 ${activeMobileTab !== 'tracked' ? 'hidden lg:block' : ''}`}
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, 'tracked')}
-            >
-              <h2 className="font-bold text-xl flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></span>
-                Saved To Apply ({tracked.length})
-              </h2>
-              {tracked.map((job) => (
-                <div 
-                  key={job.id} 
-                  className="relative group/dash cursor-grab active:cursor-grabbing"
-                  draggable
-                  onDragStart={(e) => e.dataTransfer.setData("jobId", job.id)}
-                >
-                  <JobCard job={job} onClick={() => handleApplyClick(job)} hideTrackButton={true} disableSwipe={true} />
-                  <div className="lg:hidden mt-2 flex gap-2">
-                    <Button variant="outline" size="sm" className="w-full text-xs font-semibold" onClick={() => moveJob(job.id, 'interviewing')}>Move to Interviewing ➔</Button>
-                  </div>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="absolute -top-3 -right-3 rounded-full opacity-0 group-hover/dash:opacity-100 transition-opacity shadow-lg z-20"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemove(job.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                className={`space-y-4 min-h-[500px] p-3 rounded-2xl bg-secondary/10 border border-secondary/20 ${activeMobileTab !== 'saved' ? 'hidden lg:block' : ''}`}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, 'saved')}
+              >
+                <h2 className="font-bold text-sm flex items-center gap-1.5 pb-2 border-b border-zinc-800">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
+                  Saved ({saved.length})
+                </h2>
+                <div className="space-y-3">
+                  {saved.map((job) => (
+                    <div 
+                      key={job.id} 
+                      className="relative group/dash cursor-grab active:cursor-grabbing"
+                      draggable
+                      onDragStart={(e) => e.dataTransfer.setData("jobId", job.id)}
+                    >
+                      <JobCard job={job} onClick={() => handleApplyClick(job)} hideTrackButton={true} disableSwipe={true} />
+                      <div className="lg:hidden mt-2 flex gap-2">
+                        <Button variant="outline" size="sm" className="w-full text-xs font-semibold" onClick={() => moveJob(job.id, 'applied')}>Move to Applied ➔</Button>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-3 -right-3 rounded-full opacity-0 group-hover/dash:opacity-100 transition-opacity shadow-lg z-20"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemove(job.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {saved.length === 0 && (
+                    <div className="border border-dashed border-border rounded-xl p-8 flex items-center justify-center text-center opacity-50">
+                      <p className="text-muted-foreground text-xs">Drop jobs here</p>
+                    </div>
+                  )}
                 </div>
-              ))}
-              {tracked.length === 0 && (
-                <div className="border border-dashed border-border rounded-xl p-8 flex items-center justify-center text-center opacity-50">
-                  <p className="text-muted-foreground text-sm">Drop jobs here</p>
+              </div>
+              
+              {/* COLUMN 2: APPLIED */}
+              <div 
+                className={`space-y-4 min-h-[500px] p-3 rounded-2xl bg-blue-500/5 border border-blue-500/20 ${activeMobileTab !== 'applied' ? 'hidden lg:block' : ''}`}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, 'applied')}
+              >
+                <h2 className="font-bold text-sm flex items-center gap-1.5 pb-2 border-b border-zinc-800 text-blue-400">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-400"></span>
+                  Applied ({applied.length})
+                </h2>
+                <div className="space-y-3">
+                  {applied.map((job) => (
+                    <div 
+                      key={job.id} 
+                      className="relative group/dash cursor-grab active:cursor-grabbing"
+                      draggable
+                      onDragStart={(e) => e.dataTransfer.setData("jobId", job.id)}
+                    >
+                      <JobCard job={job} onClick={() => handleApplyClick(job)} hideTrackButton={true} disableSwipe={true} />
+                      <div className="lg:hidden mt-2 flex gap-2">
+                        <Button variant="outline" size="sm" className="w-full text-xs font-semibold" onClick={() => moveJob(job.id, 'saved')}>⬅ Back</Button>
+                        <Button variant="outline" size="sm" className="w-full text-xs font-semibold" onClick={() => moveJob(job.id, 'interviewing')}>Interviewing ➔</Button>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-3 -right-3 rounded-full opacity-0 group-hover/dash:opacity-100 transition-opacity shadow-lg z-20"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemove(job.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {applied.length === 0 && (
+                    <div className="border border-dashed border-border rounded-xl p-8 flex items-center justify-center text-center opacity-50">
+                      <p className="text-muted-foreground text-xs">Drop applied jobs here</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            
-            {/* COLUMN 2: INTERVIEWING */}
-            <div 
-              className={`space-y-6 min-h-[500px] p-4 rounded-2xl bg-yellow-500/5 border border-yellow-500/20 ${activeMobileTab !== 'interviewing' ? 'hidden lg:block' : ''}`}
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, 'interviewing')}
-            >
-              <h2 className="font-bold text-xl flex items-center gap-2 text-foreground">
-                <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
-                Interviewing ({interviewing.length})
-              </h2>
-              {interviewing.map((job) => (
-                <div 
-                  key={job.id} 
-                  className="relative group/dash cursor-grab active:cursor-grabbing pb-12"
-                  draggable
-                  onDragStart={(e) => e.dataTransfer.setData("jobId", job.id)}
-                >
-                  <JobCard job={job} onClick={() => handleApplyClick(job)} hideTrackButton={true} disableSwipe={true} />
-                  <div className="lg:hidden mt-2 flex gap-2">
-                    <Button variant="outline" size="sm" className="w-full text-xs font-semibold" onClick={() => moveJob(job.id, 'tracked')}>⬅ Back</Button>
-                    <Button variant="outline" size="sm" className="w-full text-xs font-semibold text-green-500 border-green-500/20" onClick={() => moveJob(job.id, 'offer')}>Got Offer! ➔</Button>
-                  </div>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[90%] bg-amber-500/20 hover:bg-amber-500/30 text-amber-500 border border-amber-500/30 font-bold"
-                    onClick={() => window.location.href=`/community`}
-                  >
-                    Read Cheat Codes 💬
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="absolute -top-3 -right-3 rounded-full opacity-0 group-hover/dash:opacity-100 transition-opacity shadow-lg z-20"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemove(job.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              {interviewing.length === 0 && (
-                <div className="border border-dashed border-border rounded-xl p-8 flex items-center justify-center text-center opacity-50">
-                  <p className="text-muted-foreground text-sm">Drag jobs here after applying</p>
-                </div>
-              )}
-            </div>
+              </div>
 
-            {/* COLUMN 3: OFFERS */}
-            <div 
-              className={`space-y-6 min-h-[500px] p-4 rounded-2xl bg-green-500/5 border border-green-500/20 ${activeMobileTab !== 'offer' ? 'hidden lg:block' : ''}`}
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, 'offer')}
-            >
-              <h2 className="font-bold text-xl flex items-center gap-2 text-foreground">
-                <span className="w-3 h-3 rounded-full bg-green-500"></span>
-                Offers ({offers.length})
-              </h2>
-              {offers.map((job) => (
-                <div 
-                  key={job.id} 
-                  className="relative group/dash cursor-grab active:cursor-grabbing"
-                  draggable
-                  onDragStart={(e) => e.dataTransfer.setData("jobId", job.id)}
-                >
-                  <JobCard job={job} onClick={() => handleApplyClick(job)} hideTrackButton={true} disableSwipe={true} />
-                  <div className="lg:hidden mt-2 flex gap-2">
-                    <Button variant="outline" size="sm" className="w-full text-xs font-semibold" onClick={() => moveJob(job.id, 'interviewing')}>⬅ Back to Interview</Button>
-                  </div>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="absolute -top-3 -right-3 rounded-full opacity-0 group-hover/dash:opacity-100 transition-opacity shadow-lg z-20"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemove(job.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+              {/* COLUMN 3: INTERVIEWING */}
+              <div 
+                className={`space-y-4 min-h-[500px] p-3 rounded-2xl bg-yellow-500/5 border border-yellow-500/20 ${activeMobileTab !== 'interviewing' ? 'hidden lg:block' : ''}`}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, 'interviewing')}
+              >
+                <h2 className="font-bold text-sm flex items-center gap-1.5 pb-2 border-b border-zinc-800 text-yellow-400">
+                  <span className="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
+                  Interviewing ({interviewing.length})
+                </h2>
+                <div className="space-y-3">
+                  {interviewing.map((job) => (
+                    <div 
+                      key={job.id} 
+                      className="relative group/dash cursor-grab active:cursor-grabbing"
+                      draggable
+                      onDragStart={(e) => e.dataTransfer.setData("jobId", job.id)}
+                    >
+                      <JobCard job={job} onClick={() => handleApplyClick(job)} hideTrackButton={true} disableSwipe={true} />
+                      <div className="lg:hidden mt-2 flex gap-2">
+                        <Button variant="outline" size="sm" className="w-full text-xs font-semibold" onClick={() => moveJob(job.id, 'applied')}>⬅ Back</Button>
+                        <Button variant="outline" size="sm" className="w-full text-xs font-semibold text-green-500 border-green-500/20" onClick={() => moveJob(job.id, 'offer')}>Offer! ➔</Button>
+                        <Button variant="outline" size="sm" className="w-full text-xs font-semibold text-red-500 border-red-500/20" onClick={() => moveJob(job.id, 'rejected')}>Reject ➔</Button>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-3 -right-3 rounded-full opacity-0 group-hover/dash:opacity-100 transition-opacity shadow-lg z-20"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemove(job.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {interviewing.length === 0 && (
+                    <div className="border border-dashed border-border rounded-xl p-8 flex items-center justify-center text-center opacity-50">
+                      <p className="text-muted-foreground text-xs">Drop interviewing jobs here</p>
+                    </div>
+                  )}
                 </div>
-              ))}
-              {offers.length === 0 && (
-                <div className="border border-dashed border-border rounded-xl p-8 flex items-center justify-center text-center opacity-50">
-                  <p className="text-muted-foreground text-sm">Celebrate your offers here! 🎉</p>
+              </div>
+
+              {/* COLUMN 4: OFFERS */}
+              <div 
+                className={`space-y-4 min-h-[500px] p-3 rounded-2xl bg-green-500/5 border border-green-500/20 ${activeMobileTab !== 'offer' ? 'hidden lg:block' : ''}`}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, 'offer')}
+              >
+                <h2 className="font-bold text-sm flex items-center gap-1.5 pb-2 border-b border-zinc-800 text-green-400">
+                  <span className="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                  Offers ({offers.length})
+                </h2>
+                <div className="space-y-3">
+                  {offers.map((job) => (
+                    <div 
+                      key={job.id} 
+                      className="relative group/dash cursor-grab active:cursor-grabbing"
+                      draggable
+                      onDragStart={(e) => e.dataTransfer.setData("jobId", job.id)}
+                    >
+                      <JobCard job={job} onClick={() => handleApplyClick(job)} hideTrackButton={true} disableSwipe={true} />
+                      <div className="lg:hidden mt-2 flex gap-2">
+                        <Button variant="outline" size="sm" className="w-full text-xs font-semibold" onClick={() => moveJob(job.id, 'interviewing')}>⬅ Back</Button>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-3 -right-3 rounded-full opacity-0 group-hover/dash:opacity-100 transition-opacity shadow-lg z-20"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemove(job.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {offers.length === 0 && (
+                    <div className="border border-dashed border-border rounded-xl p-8 flex items-center justify-center text-center opacity-50">
+                      <p className="text-muted-foreground text-xs">Got an offer? 🎉 Drop it here!</p>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
+
+              {/* COLUMN 5: REJECTED */}
+              <div 
+                className={`space-y-4 min-h-[500px] p-3 rounded-2xl bg-red-500/5 border border-red-500/20 ${activeMobileTab !== 'rejected' ? 'hidden lg:block' : ''}`}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, 'rejected')}
+              >
+                <h2 className="font-bold text-sm flex items-center gap-1.5 pb-2 border-b border-zinc-800 text-red-400">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                  Rejected ({rejected.length})
+                </h2>
+                <div className="space-y-3">
+                  {rejected.map((job) => (
+                    <div 
+                      key={job.id} 
+                      className="relative group/dash cursor-grab active:cursor-grabbing"
+                      draggable
+                      onDragStart={(e) => e.dataTransfer.setData("jobId", job.id)}
+                    >
+                      <JobCard job={job} onClick={() => handleApplyClick(job)} hideTrackButton={true} disableSwipe={true} />
+                      <div className="lg:hidden mt-2 flex gap-2">
+                        <Button variant="outline" size="sm" className="w-full text-xs font-semibold" onClick={() => moveJob(job.id, 'interviewing')}>⬅ Back</Button>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-3 -right-3 rounded-full opacity-0 group-hover/dash:opacity-100 transition-opacity shadow-lg z-20"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemove(job.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {rejected.length === 0 && (
+                    <div className="border border-dashed border-border rounded-xl p-8 flex items-center justify-center text-center opacity-50">
+                      <p className="text-muted-foreground text-xs">Empty</p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
           </>
         )}
 

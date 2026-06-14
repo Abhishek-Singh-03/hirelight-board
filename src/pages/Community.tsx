@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageSquare, ThumbsUp, Calendar, Building2, PenLine, EyeOff, Eye, X, CheckCircle2, AlertCircle, Share2, Copy } from "lucide-react";
+import { API_BASE_URL } from "@/lib/api";
+import { usePageSEO } from "@/lib/seo";
 
 export interface ExperiencePost {
   id: string;
@@ -21,9 +23,14 @@ export interface ExperiencePost {
   shareCode?: string;
 }
 
-const API = "https://hirelight-api.onrender.com";
+const API = API_BASE_URL;
 
 export default function Community() {
+  usePageSEO({
+    title: "Developer Community | HireLight",
+    description: "Real interview experiences, salary offers, and rejection stories from developers. Help others with your honest interview story.",
+  });
+
   const { shareCode } = useParams<{ shareCode: string }>();
   const navigate = useNavigate();
   

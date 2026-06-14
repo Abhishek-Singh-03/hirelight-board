@@ -47,4 +47,23 @@
         </sql>
     </changeSet>
 
+    <changeSet id="2" author="abhishek">
+        <sql>
+            CREATE TABLE user_jobs (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                job_id INT NOT NULL,
+                status ENUM('SAVED', 'APPLIED', 'INTERVIEWING', 'OFFER', 'REJECTED', 'PASSED') NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
+                UNIQUE KEY unique_user_job (user_id, job_id)
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet id="3" author="abhishek">
+        <sqlFile path="migrations/V2__password_reset_tokens.sql" relativeToChangelogFile="true" />
+    </changeSet>
+
 </databaseChangeLog>

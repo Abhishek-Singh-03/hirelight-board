@@ -20,8 +20,21 @@ public interface UserDao {
     @SqlQuery("SELECT id, name, email, role, password_hash FROM users WHERE email = :email LIMIT 1")
     Optional<UserProfile> findByEmail(@Bind("email") String email);
 
-    @SqlUpdate("INSERT INTO users (name, email, password_hash, role) VALUES (:name, :email, :passwordHash, :role)")
+    @SqlQuery("SELECT id, name, email, role, password_hash FROM users WHERE id = :id LIMIT 1")
+    Optional<UserProfile> findById(@Bind("id") int id);
+
+    @SqlUpdate("INSERT INTO users (name, email, password_hash, role, email_verified) VALUES (:name, :email, :passwordHash, :role, :emailVerified)")
     @GetGeneratedKeys
     int insertUser(@Bind("name") String name, @Bind("email") String email,
-                   @Bind("passwordHash") String passwordHash, @Bind("role") String role);
+                   @Bind("passwordHash") String passwordHash, @Bind("role") String role,
+                   @Bind("emailVerified") boolean emailVerified);
+
+    @SqlUpdate("UPDATE users SET password_hash = :passwordHash WHERE id = :userId")
+    void updatePassword(@Bind("userId") int userId, @Bind("passwordHash") String passwordHash);
+
+    @SqlUpdate("UPDATE users SET email_verified = TRUE WHERE id = :userId")
+    void setEmailVerified(@Bind("userId") int userId);
+
+    @SqlQuery("SELECT email_verified FROM users WHERE id = :userId")
+    boolean isEmailVerified(@Bind("userId") int userId);
 }

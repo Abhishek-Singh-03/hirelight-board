@@ -24,10 +24,14 @@ import com.hirelight.db.JobDao;
 import com.hirelight.db.ExperienceDao;
 import com.hirelight.db.UserDao;
 import com.hirelight.db.SalaryDao;
+import com.hirelight.db.UserJobDao;
+import com.hirelight.db.PasswordResetDao;
+import com.hirelight.db.EmailVerificationDao;
 import com.hirelight.resources.AuthResource;
 import com.hirelight.resources.ExperienceResource;
 import com.hirelight.resources.TalentResource;
 import com.hirelight.resources.SalaryResource;
+import com.hirelight.resources.PasswordResetResource;
 
 public class HireLightApplication extends Application<HireLightConfiguration> {
 
@@ -67,6 +71,9 @@ public class HireLightApplication extends Application<HireLightConfiguration> {
         final ExperienceDao experienceDao = jdbi.onDemand(ExperienceDao.class);
         final UserDao userDao = jdbi.onDemand(UserDao.class);
         final SalaryDao salaryDao = jdbi.onDemand(SalaryDao.class);
+        final UserJobDao userJobDao = jdbi.onDemand(UserJobDao.class);
+        final PasswordResetDao passwordResetDao = jdbi.onDemand(PasswordResetDao.class);
+        final EmailVerificationDao emailVerificationDao = jdbi.onDemand(EmailVerificationDao.class);
 
         // --- ENABLE CORS FOR FRONTEND ---
         final FilterRegistration.Dynamic cors = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
@@ -87,8 +94,9 @@ public class HireLightApplication extends Application<HireLightConfiguration> {
         environment.jersey().register(new AuthValueFactoryProvider.Binder<>(User.class));
 
         // --- REGISTER ALL RESOURCES ---
-        environment.jersey().register(new AuthResource(userDao));
-        environment.jersey().register(new com.hirelight.resources.JobResource(jobDao));
+        environment.jersey().register(new AuthResource(userDao, emailVerificationDao));
+        environment.jersey().register(new PasswordResetResource(userDao, passwordResetDao, emailVerificationDao));
+        environment.jersey().register(new com.hirelight.resources.JobResource(jobDao, userJobDao));
         environment.jersey().register(new com.hirelight.resources.JobSyncResource(jobDao));
         environment.jersey().register(new ExperienceResource(experienceDao));
         environment.jersey().register(new TalentResource(userDao));

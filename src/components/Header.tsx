@@ -172,7 +172,40 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
                 </a>
               ))}
               
-
+              {/* Mobile Auth Buttons */}
+              <div className="border-t border-border/50 pt-4 mt-2">
+                {isAuthenticated ? (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/10 border border-primary/20 text-primary text-sm font-semibold">
+                      <User className="h-4 w-4 shrink-0" />
+                      <div className="flex flex-col min-w-0">
+                        <span className="truncate">{user?.name}</span>
+                        <span className="text-[10px] opacity-75 font-normal">({user?.role})</span>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive text-sm" 
+                      onClick={() => {
+                        logout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      <LogOut className="h-4 w-4" /> Logout
+                    </Button>
+                  </div>
+                ) : (
+                  <Button 
+                    className="w-full gap-2 shadow-md shadow-primary/20" 
+                    onClick={() => {
+                      window.location.href = '/auth';
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    <LogIn className="h-4 w-4" /> Sign In
+                  </Button>
+                )}
+              </div>
             </nav>
           </div>
         )}

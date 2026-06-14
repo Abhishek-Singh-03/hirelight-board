@@ -13,10 +13,15 @@ public class Job {
     private String description;
     private String salary;
     private String type;
+    private String status;
 
     public Job() {}
 
     public Job(String id, String title, String company, String location, String applyLink, String postedOn, String category, String description, String salary, String type) {
+        this(id, title, company, location, applyLink, postedOn, category, description, salary, type, null);
+    }
+
+    public Job(String id, String title, String company, String location, String applyLink, String postedOn, String category, String description, String salary, String type, String status) {
         this.id = id;
         this.title = title;
         this.company = company;
@@ -27,6 +32,7 @@ public class Job {
         this.description = description;
         this.salary = salary;
         this.type = type;
+        this.status = status;
     }
 
     @JsonProperty public String getId() { return id; }
@@ -39,6 +45,7 @@ public class Job {
     @JsonProperty public String getDescription() { return description; }
     @JsonProperty public String getSalary() { return salary; }
     @JsonProperty public String getType() { return type; }
+    @JsonProperty public String getStatus() { return status; }
 
     public void setId(String id) { this.id = id; }
     public void setTitle(String title) { this.title = title; }
@@ -50,4 +57,5 @@ public class Job {
     public void setDescription(String description) { this.description = description; }
     public void setSalary(String salary) { this.salary = salary; }
     public void setType(String type) { this.type = type; }
+    public void setStatus(String status) { this.status = status; }
 }

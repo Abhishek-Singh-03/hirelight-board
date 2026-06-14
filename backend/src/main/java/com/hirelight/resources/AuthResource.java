@@ -4,6 +4,7 @@ import com.hirelight.api.AuthRequest;
 import com.hirelight.api.AuthResponse;
 import com.hirelight.api.UserProfile;
 import com.hirelight.auth.JwtUtil;
+import com.hirelight.db.EmailVerificationDao;
 import com.hirelight.db.UserDao;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -11,6 +12,7 @@ import jakarta.ws.rs.core.Response;
 import org.mindrot.jbcrypt.BCrypt;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Path("/auth")
 @Produces(MediaType.APPLICATION_JSON)
@@ -18,9 +20,13 @@ import java.util.Optional;
 public class AuthResource {
 
     private final UserDao userDao;
+    private final EmailVerificationDao verifyDao;
 
-    public AuthResource(UserDao userDao) {
+    private static final String FRONTEND_BASE_URL = "http://localhost:5173";
+
+    public AuthResource(UserDao userDao, EmailVerificationDao verifyDao) {
         this.userDao = userDao;
+        this.verifyDao = verifyDao;
     }
 
     // REGISTER endpoint
@@ -37,14 +43,25 @@ public class AuthResource {
             return Response.status(409).entity(Map.of("error", "An account with this email already exists.")).build();
         }
 
-        // Hash password and save
+        // Hash password and save — new users are NOT verified by default
         String hashedPassword = BCrypt.hashpw(req.getPassword(), BCrypt.gensalt());
         String role = (req.getRole() != null && req.getRole().equals("RECRUITER")) ? "RECRUITER" : "CANDIDATE";
-        int newUserId = userDao.insertUser(req.getName(), req.getEmail(), hashedPassword, role);
+        int newUserId = userDao.insertUser(req.getName(), req.getEmail(), hashedPassword, role, false);
 
-        // Generate JWT
-        String token = JwtUtil.generateToken(newUserId, req.getName(), role);
-        return Response.status(201).entity(new AuthResponse(token, role, req.getName(), newUserId)).build();
+        // Generate verification token
+        String verifyToken = UUID.randomUUID().toString().replace("-", "");
+        verifyDao.saveVerificationToken(newUserId, verifyToken);
+
+        String verifyLink = FRONTEND_BASE_URL + "/auth/verify-email?token=" + verifyToken;
+        System.out.println("[HireLight] Email verification link for " + req.getEmail() + ": " + verifyLink);
+
+        // Return 201 with the verify link (shown on frontend — no email needed)
+        return Response.status(201).entity(Map.of(
+            "message", "Account created! Please verify your email to continue.",
+            "verifyLink", verifyLink,
+            "email", req.getEmail(),
+            "requiresVerification", true
+        )).build();
     }
 
     // LOGIN endpoint
@@ -67,6 +84,17 @@ public class AuthResource {
         }
 
         int userId = Integer.parseInt(user.getId());
+
+        // Check email verification
+        boolean verified = userDao.isEmailVerified(userId);
+        if (!verified) {
+            return Response.status(403).entity(Map.of(
+                "error", "Please verify your email before logging in.",
+                "unverified", true,
+                "email", req.getEmail()
+            )).build();
+        }
+
         String token = JwtUtil.generateToken(userId, user.getName(), user.getRole());
         return Response.ok(new AuthResponse(token, user.getRole(), user.getName(), userId)).build();
     }

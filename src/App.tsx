@@ -14,6 +14,8 @@ import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import Community from "./pages/Community";
 import Salaries from "./pages/Salaries";
+import JobDetail from "./pages/JobDetail";
+import ResetPassword from "./pages/ResetPassword";
 import { ParticleBackground } from "./components/ParticleBackground";
 
 const queryClient = new QueryClient();
@@ -31,10 +33,13 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
+      <Route path="/auth/verify-email" element={<Auth />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/community" element={<Community />} />
       <Route path="/community/:shareCode" element={<Community />} />
       <Route path="/salaries" element={<Salaries />} />
+      <Route path="/jobs/:id" element={<JobDetail />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Hidden internal admin — no nav link, direct URL only */}
       <Route path="/admin" element={<Admin />} />

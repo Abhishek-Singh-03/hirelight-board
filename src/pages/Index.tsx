@@ -8,6 +8,8 @@ import ScrollingBanner from "@/components/ScrollingBanner";
 import { Job } from "@/components/JobCard";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "@/lib/api";
+import { usePageSEO } from "@/lib/seo";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +33,11 @@ const TECH_DICTIONARY = [
 dayjs.extend(customParseFormat);
 
 const Index = () => {
+  usePageSEO({
+    title: "HireLight — Find Your Next Tech Job",
+    description: "Browse thousands of tech, remote, fresher and government jobs. AI resume matching, Kanban job tracker, salary insights — all in one place. Free forever.",
+  });
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [resumeText, setResumeText] = useState("");
@@ -41,7 +48,7 @@ const Index = () => {
   const [jobTypesFilter, setJobTypesFilter] = useState<string[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isAuthenticated, isRecruiter } = useAuth();
+  const { isAuthenticated, isRecruiter, user } = useAuth();
   const navigate = useNavigate();
 
   // Redirect recruiters away from job listings — they have their own dashboard
@@ -63,8 +70,12 @@ const Index = () => {
         if (jobTypesFilter.length > 0) queryParams.append("jobType", jobTypesFilter.join(","));
 
         // Connect directly to our new Dropwizard Backend with dynamic filters!
-        const endpoint = `https://hirelight-api.onrender.com/jobs?${queryParams.toString()}`;
-        const response = await fetch(endpoint);
+        const headers: HeadersInit = {};
+        if (isAuthenticated && user?.token) {
+          headers["Authorization"] = `Bearer ${user.token}`;
+        }
+        const endpoint = `${API_BASE_URL}/jobs?${queryParams.toString()}`;
+        const response = await fetch(endpoint, { headers });
         if (!response.ok) {
           throw new Error(`Failed to fetch jobs: ${response.status}`);
         }

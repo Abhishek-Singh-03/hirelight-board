@@ -2,9 +2,13 @@ import { useState, useEffect } from "react";
 import { JobCard, Job } from "./JobCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, LogIn } from "lucide-react";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { API_BASE_URL } from "@/lib/api";
 
 dayjs.extend(customParseFormat);
 
@@ -22,12 +26,21 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
   const [error, setError] = useState<string | null>(null);
   const [isSwipeMode, setIsSwipeMode] = useState(false);
   const [currentSwipeIndex, setCurrentSwipeIndex] = useState(0);
+  const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const jobsPerPage = 6;
+  const jobsPerPage = 12;
 
   // All filtering is now handled natively by the Java Dropwizard backend!
   const filteredJobs = jobs;
+
+  // Reset to page 1 whenever the job list changes (filter/search changed)
+  useEffect(() => {
+    setCurrentPage(1);
+    setCurrentSwipeIndex(0);
+  }, [jobs]);
 
   // Pagination logic
   const indexOfLastJob = currentPage * jobsPerPage;
@@ -38,20 +51,49 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-      setCurrentSwipeIndex(0); // reset swipe index on page change
+      setCurrentSwipeIndex(0);
+      // Smooth scroll to top of job list
+      const jobsEl = document.getElementById("jobs");
+      if (jobsEl) jobsEl.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
-  const handleSwipeSave = (job: Job) => {
-    const saved = JSON.parse(localStorage.getItem('savedJobs') || '[]');
-    if(!saved.find((s: Job) => s.id === job.id)) {
-      saved.push(job);
-      localStorage.setItem('savedJobs', JSON.stringify(saved));
+  const handleSwipeSave = async (job: Job) => {
+    if (!isAuthenticated) {
+      setShowAuthDialog(true);
+      return;
+    }
+    try {
+      await fetch(`${API_BASE_URL}/jobs/${job.id}/stage?status=SAVED`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${user?.token}`
+        }
+      });
+      const saved = JSON.parse(localStorage.getItem('savedJobs') || '[]');
+      if(!saved.find((s: Job) => s.id === job.id)) {
+        saved.push(job);
+        localStorage.setItem('savedJobs', JSON.stringify(saved));
+      }
+    } catch (err) {
+      console.error("Failed to sync swipe save:", err);
     }
     setCurrentSwipeIndex(prev => prev + 1);
   };
 
-  const handleSwipePass = () => {
+  const handleSwipePass = async (job: Job) => {
+    if (isAuthenticated) {
+      try {
+        await fetch(`${API_BASE_URL}/jobs/${job.id}/stage?status=PASSED`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${user?.token}`
+          }
+        });
+      } catch (err) {
+        console.error("Failed to sync swipe pass:", err);
+      }
+    }
     setCurrentSwipeIndex(prev => prev + 1);
   };
 
@@ -66,7 +108,7 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
       if (!currentJob) return;
 
       if (e.key === 'ArrowLeft') {
-        handleSwipePass();
+        handleSwipePass(currentJob);
       } else if (e.key === 'ArrowRight') {
         handleSwipeSave(currentJob);
       }
@@ -175,7 +217,7 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
                     onClick={() => onJobClick(job)} 
                     matchScore={matchScore} 
                     isLocked={isLocked}
-                    onSwipeLeft={handleSwipePass}
+                    onSwipeLeft={() => handleSwipePass(job)}
                     onSwipeRight={() => handleSwipeSave(job)}
                   />
                 );
@@ -188,7 +230,7 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
                     variant="outline" 
                     size="lg"
                     className="flex-1 max-w-[140px] border-destructive/50 hover:bg-destructive/10 text-destructive font-bold text-lg h-14 rounded-2xl"
-                    onClick={() => handleSwipePass()}
+                    onClick={() => handleSwipePass(jobsToShow[currentSwipeIndex])}
                   >
                     ❌ Pass
                   </Button>
@@ -323,6 +365,43 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
         </Button>
         </div>
       )}
+
+      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <DialogContent className="sm:max-w-[420px] border border-border/85 shadow-2xl rounded-2xl bg-zinc-950/95 backdrop-blur-xl">
+          <DialogHeader className="space-y-3 pt-4">
+            <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/25">
+              <LogIn className="h-6 w-6 text-primary" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-center bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Save Job to Your Board
+            </DialogTitle>
+            <DialogDescription className="text-center text-zinc-400 text-sm leading-relaxed px-2">
+              Create a free account or sign in to save jobs, build your tracking board, and sync your applications across mobile and desktop.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-4 pb-4">
+            <Button
+              variant="outline"
+              className="flex-1 rounded-xl h-11 font-semibold border-zinc-800 hover:bg-zinc-900 transition-all"
+              onClick={() => {
+                setShowAuthDialog(false);
+                navigate("/auth?mode=login");
+              }}
+            >
+              Sign In
+            </Button>
+            <Button
+              className="flex-1 rounded-xl h-11 font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+              onClick={() => {
+                setShowAuthDialog(false);
+                navigate("/auth?mode=register");
+              }}
+            >
+              Create Account
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -13,6 +13,7 @@ import {
   X, Loader2, Building2, DollarSign, LinkIcon, Tag, LayoutGrid, List
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "@/lib/api";
 
 interface Candidate {
   id: string;
@@ -59,7 +60,7 @@ const RecruiterDashboard = () => {
   useEffect(() => {
     // Fetch all candidates
     setLoadingCandidates(true);
-    fetch("https://hirelight-api.onrender.com/talent")
+    fetch(`${API_BASE_URL}/talent`)
       .then(res => res.json())
       .then(data => {
         const mapped = data.map((u: any) => {
@@ -91,7 +92,7 @@ const RecruiterDashboard = () => {
     if (!user) return;
     setLoadingMyJobs(true);
     const auth = JSON.parse(localStorage.getItem("hl_auth") || "{}");
-    fetch("https://hirelight-api.onrender.com/jobs/mine", {
+    fetch(`${API_BASE_URL}/jobs/mine`, {
       headers: { "Authorization": `Bearer ${auth.token}` }
     })
       .then(res => res.json())
@@ -113,7 +114,7 @@ const RecruiterDashboard = () => {
     setPosting(true);
     const auth = JSON.parse(localStorage.getItem("hl_auth") || "{}");
     try {
-      const res = await fetch("https://hirelight-api.onrender.com/jobs/post", {
+      const res = await fetch(`${API_BASE_URL}/jobs/post`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${auth.token}` },
         body: JSON.stringify(jobForm)

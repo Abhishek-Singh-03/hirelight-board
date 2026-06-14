@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Banknote, Building2, Briefcase, Plus, IndianRupee, Search } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { API_BASE_URL } from "@/lib/api";
+import { usePageSEO } from "@/lib/seo";
 
 interface Salary {
   id: number;
@@ -18,9 +20,14 @@ interface Salary {
   date: string;
 }
 
-const API = "https://hirelight-api.onrender.com";
+const API = API_BASE_URL;
 
 export default function Salaries() {
+  usePageSEO({
+    title: "Tech Salaries in India | HireLight",
+    description: "Anonymous salary data for tech roles in India. See real base salary, bonus and stock data for SDE, product managers and more at top tech companies.",
+  });
+
   const [salaries, setSalaries] = useState<Salary[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);

@@ -3,6 +3,8 @@ package com.hirelight.resources;
 import com.hirelight.core.User;
 import com.hirelight.api.Job;
 import com.hirelight.db.JobDao;
+import com.hirelight.db.UserJobDao;
+import io.jsonwebtoken.Claims;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.*;
@@ -11,6 +13,7 @@ import jakarta.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Path("/jobs")
 @Produces(MediaType.APPLICATION_JSON)
@@ -18,9 +21,11 @@ import java.util.Map;
 public class JobResource {
 
     private final JobDao jobDao;
+    private final UserJobDao userJobDao;
 
-    public JobResource(JobDao jobDao) {
+    public JobResource(JobDao jobDao, UserJobDao userJobDao) {
         this.jobDao = jobDao;
+        this.userJobDao = userJobDao;
     }
 
     // PUBLIC — anyone can browse jobs with backend filtering
@@ -30,10 +35,27 @@ public class JobResource {
             @QueryParam("search") String search,
             @QueryParam("minLPA") Double minLPA,
             @QueryParam("location") String location,
-            @QueryParam("jobType") String jobType) {
+            @QueryParam("jobType") String jobType,
+            @HeaderParam("Authorization") String authHeader) {
         
         List<Job> allJobs = jobDao.getAllJobs();
         java.util.stream.Stream<Job> stream = allJobs.stream();
+
+        // Filter out already swiped/saved/passed jobs if authenticated
+        Integer userId = getUserIdFromAuth(authHeader);
+        if (userId != null) {
+            List<Integer> swipedIds = userJobDao.getSwipedJobIds(userId);
+            if (swipedIds != null && !swipedIds.isEmpty()) {
+                stream = stream.filter(j -> {
+                    try {
+                        int id = Integer.parseInt(j.getId());
+                        return !swipedIds.contains(id);
+                    } catch (NumberFormatException e) {
+                        return true;
+                    }
+                });
+            }
+        }
 
         // 1. Category Filter
         if (category != null && !category.trim().isEmpty() && !category.equalsIgnoreCase("all")) {
@@ -89,6 +111,17 @@ public class JobResource {
         // don't disclose salaries immediately.
 
         return Response.ok(stream.collect(java.util.stream.Collectors.toList())).build();
+    }
+
+    // PUBLIC — get a single job by ID (for job detail page + SEO)
+    @GET
+    @Path("/{id}/detail")
+    public Response getJobById(@PathParam("id") int id) {
+        Optional<com.hirelight.api.Job> jobOpt = jobDao.getJobById(id);
+        if (!jobOpt.isPresent()) {
+            return Response.status(404).entity(Map.of("error", "Job not found.")).build();
+        }
+        return Response.ok(jobOpt.get()).build();
     }
 
     // RECRUITER — get only the jobs they posted
@@ -206,6 +239,58 @@ public class JobResource {
             if (i > 0) costs[s2.length()] = lastValue;
         }
         return costs[s2.length()];
+    }
+
+    private Integer getUserIdFromAuth(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return null;
+        }
+        try {
+            String token = authHeader.substring(7);
+            Claims claims = com.hirelight.auth.JwtUtil.validateToken(token);
+            return Integer.parseInt(claims.getSubject());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    @GET
+    @Path("/tracked")
+    @RolesAllowed("CANDIDATE")
+    public Response getTrackedJobs(@Auth User user) {
+        return Response.ok(userJobDao.getUserTrackedJobs(user.getId())).build();
+    }
+
+    @POST
+    @Path("/{id}/stage")
+    @RolesAllowed("CANDIDATE")
+    public Response updateJobStage(
+            @Auth User user,
+            @PathParam("id") int jobId,
+            @QueryParam("status") String status) {
+        if (status == null || status.trim().isEmpty()) {
+            return Response.status(400).entity(Map.of("error", "Status parameter is required.")).build();
+        }
+        String stage = status.toUpperCase().trim();
+        if (!List.of("SAVED", "APPLIED", "INTERVIEWING", "OFFER", "REJECTED", "PASSED").contains(stage)) {
+            return Response.status(400).entity(Map.of("error", "Invalid status: " + status)).build();
+        }
+        
+        userJobDao.insertOrUpdateStage(user.getId(), jobId, stage);
+        return Response.ok(Map.of("message", "Job stage updated successfully to " + stage)).build();
+    }
+
+    @DELETE
+    @Path("/{id}/track")
+    @RolesAllowed("CANDIDATE")
+    public Response deleteTrackedJob(
+            @Auth User user,
+            @PathParam("id") int jobId) {
+        int deleted = userJobDao.deleteTrackedJob(user.getId(), jobId);
+        if (deleted == 0) {
+            return Response.status(404).entity(Map.of("error", "Job not found in your tracker.")).build();
+        }
+        return Response.ok(Map.of("message", "Job removed from tracker successfully.")).build();
     }
 }
 
