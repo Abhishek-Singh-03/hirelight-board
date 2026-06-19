@@ -26,7 +26,7 @@ const defaultRadarData = [
 
 const Dashboard = () => {
   usePageSEO({
-    title: "My Dashboard | HireLight",
+    title: "My Dashboard | GoJobWise",
     description: "Track your job applications with a Kanban board. Move jobs from Saved to Applied to Offer. View your skill gap radar chart and share interview experiences.",
   });
 

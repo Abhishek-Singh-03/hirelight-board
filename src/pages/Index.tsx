@@ -34,7 +34,7 @@ dayjs.extend(customParseFormat);
 
 const Index = () => {
   usePageSEO({
-    title: "HireLight — Find Your Next Tech Job",
+    title: "GoJobWise — Find Your Next Tech Job",
     description: "Browse thousands of tech, remote, fresher and government jobs. AI resume matching, Kanban job tracker, salary insights — all in one place. Free forever.",
   });
 

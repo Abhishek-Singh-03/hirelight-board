@@ -252,7 +252,7 @@ const RecruiterDashboard = () => {
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <PlusCircle className="h-5 w-5 text-primary" /> Post a New Job Listing
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">This will appear publicly on the HireLight jobs board.</p>
+                <p className="text-sm text-muted-foreground">This will appear publicly on the GoJobWise jobs board.</p>
               </CardHeader>
               <CardContent className="p-6">
                 <form onSubmit={handlePostJob} className="space-y-5">

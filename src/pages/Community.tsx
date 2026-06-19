@@ -27,7 +27,7 @@ const API = API_BASE_URL;
 
 export default function Community() {
   usePageSEO({
-    title: "Developer Community | HireLight",
+    title: "Developer Community | GoJobWise",
     description: "Real interview experiences, salary offers, and rejection stories from developers. Help others with your honest interview story.",
   });
 

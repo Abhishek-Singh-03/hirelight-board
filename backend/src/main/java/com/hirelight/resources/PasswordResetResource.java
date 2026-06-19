@@ -22,8 +22,10 @@ public class PasswordResetResource {
     private final PasswordResetDao resetDao;
     private final EmailVerificationDao verifyDao;
 
-    // Frontend base URL — change this to your production domain when deployed
-    private static final String FRONTEND_BASE_URL = "http://localhost:5173";
+    // Frontend base URL — falls back to production domain if no env var is set
+    private static final String FRONTEND_BASE_URL = System.getenv("FRONTEND_URL") != null 
+        ? System.getenv("FRONTEND_URL") 
+        : "https://gojobwise.com";
 
     public PasswordResetResource(UserDao userDao, PasswordResetDao resetDao, EmailVerificationDao verifyDao) {
         this.userDao = userDao;

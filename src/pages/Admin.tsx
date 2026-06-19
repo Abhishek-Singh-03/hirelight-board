@@ -28,7 +28,7 @@ interface Stats {
 }
 
 const emptyForm = {
-  title: "", company: "HireLight", location: "Remote",
+  title: "", company: "GoJobWise", location: "Remote",
   salary: "", applyLink: "", category: "tech", description: "", type: "full-time"
 };
 
@@ -260,7 +260,7 @@ export default function AdminPanel() {
             <span className="text-lg">⚡</span>
           </div>
           <div>
-            <h1 className="font-bold text-white text-base leading-none">HireLight Admin</h1>
+            <h1 className="font-bold text-white text-base leading-none">GoJobWise Admin</h1>
             <p className="text-zinc-500 text-xs mt-0.5">Logged in as <span className="text-zinc-300 font-medium">{adminName}</span></p>
           </div>
         </div>

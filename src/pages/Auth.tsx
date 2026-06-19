@@ -39,14 +39,14 @@ export default function Auth() {
 
   // Handle ?verified=true or ?verified=expired from redirect after email verify
   useEffect(() => {
-    document.title = "Sign In | HireLight";
+    document.title = "Sign In | GoJobWise";
     const verified = searchParams.get("verified");
     if (verified === "true") {
       toast({ title: "Email Verified! ✅", description: "Your account is now active. Please sign in." });
     } else if (verified === "expired") {
       toast({ title: "Link Expired", description: "Your verification link has expired. Request a new one.", variant: "destructive" });
     }
-    return () => { document.title = "HireLight — Find Your Next Tech Job"; };
+    return () => { document.title = "GoJobWise — Find Your Next Tech Job"; };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -237,11 +237,11 @@ export default function Auth() {
             <div className="text-center space-y-3">
               <div className="flex items-center justify-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/20">
-                  <img src={logo} alt="HireLight" className="h-8 w-8 object-contain" />
+                  <img src={logo} alt="GoJobWise" className="h-8 w-8 object-contain" />
                 </div>
               </div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                {mode === "login" ? "Welcome Back" : mode === "register" ? "Join HireLight" : "Reset Password"}
+                {mode === "login" ? "Welcome Back" : mode === "register" ? "Join GoJobWise" : "Reset Password"}
               </h1>
               <p className="text-muted-foreground text-sm">
                 {mode === "login"

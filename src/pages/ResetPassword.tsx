@@ -22,8 +22,8 @@ export default function ResetPassword() {
   const [stage, setStage] = useState<Stage>("form");
 
   useEffect(() => {
-    document.title = "Reset Password | HireLight";
-    return () => { document.title = "HireLight — Find Your Next Tech Job"; };
+    document.title = "Reset Password | GoJobWise";
+    return () => { document.title = "GoJobWise — Find Your Next Tech Job"; };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

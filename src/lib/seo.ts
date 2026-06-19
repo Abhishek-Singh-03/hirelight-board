@@ -7,12 +7,12 @@ interface SEOProps {
   ogType?: string;
 }
 
-const DEFAULT_DESC = "HireLight helps developers and freshers find their next job. Browse thousands of tech, remote, government and fresher jobs with AI resume matching.";
-const DEFAULT_IMAGE = "https://hirelight.app/og-image.png";
+const DEFAULT_DESC = "GoJobWise helps developers and freshers find their next job. Browse thousands of tech, remote, government and fresher jobs with AI resume matching.";
+const DEFAULT_IMAGE = "https://gojobwise.com/og-image.png";
 
 export function usePageSEO({ title, description = DEFAULT_DESC, ogImage = DEFAULT_IMAGE, ogType = "website" }: SEOProps) {
   useEffect(() => {
-    const fullTitle = title.includes("HireLight") ? title : `${title} | HireLight`;
+    const fullTitle = title.includes("GoJobWise") ? title : `${title} | GoJobWise`;
     document.title = fullTitle;
 
     const setMeta = (nameOrProp: string, content: string) => {
@@ -38,7 +38,7 @@ export function usePageSEO({ title, description = DEFAULT_DESC, ogImage = DEFAUL
     setMeta("twitter:image", ogImage);
 
     return () => {
-      document.title = "HireLight — Find Your Next Tech Job";
+      document.title = "GoJobWise — Find Your Next Tech Job";
     };
   }, [title, description, ogImage, ogType]);
 }

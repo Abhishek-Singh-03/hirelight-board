@@ -22,7 +22,10 @@ public class AuthResource {
     private final UserDao userDao;
     private final EmailVerificationDao verifyDao;
 
-    private static final String FRONTEND_BASE_URL = "http://localhost:5173";
+    // Frontend base URL — falls back to production domain if no env var is set
+    private static final String FRONTEND_BASE_URL = System.getenv("FRONTEND_URL") != null 
+        ? System.getenv("FRONTEND_URL") 
+        : "https://gojobwise.com";
 
     public AuthResource(UserDao userDao, EmailVerificationDao verifyDao) {
         this.userDao = userDao;

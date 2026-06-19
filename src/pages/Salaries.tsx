@@ -24,7 +24,7 @@ const API = API_BASE_URL;
 
 export default function Salaries() {
   usePageSEO({
-    title: "Tech Salaries in India | HireLight",
+    title: "Tech Salaries in India | GoJobWise",
     description: "Anonymous salary data for tech roles in India. See real base salary, bonus and stock data for SDE, product managers and more at top tech companies.",
   });
 

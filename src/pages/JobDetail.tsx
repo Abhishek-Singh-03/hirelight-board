@@ -55,7 +55,7 @@ export default function JobDetail() {
   // Apply SEO tags whenever job changes
   useEffect(() => {
     if (!job) return;
-    const title = `${job.title} at ${job.company} | HireLight`;
+    const title = `${job.title} at ${job.company} | GoJobWise`;
     const desc = decodeHtml(job.description || '').substring(0, 160) || `${job.title} at ${job.company} — ${job.location}`;
     document.title = title;
     setMeta("description", desc);
@@ -68,8 +68,8 @@ export default function JobDetail() {
 
   // Cleanup on unmount
   useEffect(() => {
-    document.title = "HireLight — Find Your Next Tech Job";
-    return () => { document.title = "HireLight — Find Your Next Tech Job"; };
+    document.title = "GoJobWise — Find Your Next Tech Job";
+    return () => { document.title = "GoJobWise — Find Your Next Tech Job"; };
   }, []);
 
   useEffect(() => {
