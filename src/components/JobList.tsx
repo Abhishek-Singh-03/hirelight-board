@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { JobCard, Job } from "./JobCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, AlertCircle, LogIn } from "lucide-react";
+import { Loader2, AlertCircle, LogIn, X } from "lucide-react";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { useAuth } from "@/context/AuthContext";
@@ -26,8 +26,28 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
   const [error, setError] = useState<string | null>(null);
   const [isSwipeMode, setIsSwipeMode] = useState(false);
   const [currentSwipeIndex, setCurrentSwipeIndex] = useState(0);
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+
+  // Show spotlight hint only once per browser
+  useEffect(() => {
+    const seen = localStorage.getItem("gjw_swipe_hint_seen");
+    if (!seen) {
+      const t = setTimeout(() => setShowSwipeHint(true), 1800);
+      return () => clearTimeout(t);
+    }
+  }, []);
+
+  const dismissHint = () => {
+    localStorage.setItem("gjw_swipe_hint_seen", "true");
+    setShowSwipeHint(false);
+  };
+
+  const handleSwipeModeToggle = () => {
+    dismissHint();
+    setIsSwipeMode(!isSwipeMode);
+  };
   const [showAuthDialog, setShowAuthDialog] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -166,14 +186,56 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
         </h2>
         
         <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setIsSwipeMode(!isSwipeMode)}
-            className="border-primary/50 hover:bg-primary/10 text-primary"
+        {/* Focus Swipe Mode button with spotlight hint */}
+        <div className="relative">
+          {/* Pulsing glow ring — visible only when hint is active */}
+          {showSwipeHint && (
+            <span className="absolute inset-0 -m-1 rounded-lg animate-ping bg-primary/40 pointer-events-none" />
+          )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSwipeModeToggle}
+            className="relative border-primary/50 hover:bg-primary/10 text-primary"
           >
             {isSwipeMode ? "Grid View ⊞" : "Focus Swipe Mode ✨"}
           </Button>
+
+          {/* Tooltip bubble */}
+          {showSwipeHint && (
+            <div className="absolute right-0 top-full mt-3 w-64 z-30 animate-in fade-in slide-in-from-top-1 duration-200">
+              {/* Arrow pointing up */}
+              <div className="absolute -top-1.5 right-4 w-3 h-3 bg-zinc-800 border-l border-t border-zinc-700 rotate-45" />
+              <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4 shadow-xl shadow-black/50">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <p className="text-sm font-bold text-white leading-tight">✨ Try Focus Swipe Mode!</p>
+                  <button onClick={dismissHint} className="text-zinc-500 hover:text-white flex-shrink-0 mt-0.5">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <p className="text-xs text-zinc-400 leading-relaxed mb-3">
+                  Browse jobs like Tinder — <span className="text-emerald-400 font-semibold">swipe right ❤️</span> to save a job,{" "}
+                  <span className="text-rose-400 font-semibold">swipe left ✕</span> to skip. No distractions, just pure focus.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={dismissHint}
+                    className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+                  >
+                    Got it
+                  </button>
+                  <button
+                    onClick={handleSwipeModeToggle}
+                    className="ml-auto text-xs font-semibold text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+                  >
+                    Try it now →
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
           <div className="text-sm text-muted-foreground hidden md:block">
             Page {currentPage} of {totalPages}

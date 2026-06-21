@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { HeroSection } from "@/components/HeroSection";
+import { WelcomeTour } from "@/components/WelcomeTour";
 import { FilterSidebar } from "@/components/FilterSidebar";
 import { JobList } from "@/components/JobList";
 import { Footer } from "@/components/Footer";
@@ -185,6 +186,9 @@ const Index = () => {
         onSearchChange={setSearchTerm}
         onSearchSubmit={handleSearchSubmit}
       />
+
+      {/* Welcome tour for freshly logged-in users — shows once after login */}
+      {isAuthenticated && <WelcomeTour mode="user" />}
 
       {!isAuthenticated && (
         <>
