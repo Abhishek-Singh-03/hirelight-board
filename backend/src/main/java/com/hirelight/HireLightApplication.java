@@ -98,8 +98,9 @@ public class HireLightApplication extends Application<HireLightConfiguration> {
         environment.jersey().register(new PasswordResetResource(userDao, passwordResetDao, emailVerificationDao));
         environment.jersey().register(new com.hirelight.resources.JobResource(jobDao, userJobDao));
         environment.jersey().register(new com.hirelight.resources.JobSyncResource(jobDao));
-        environment.jersey().register(new ExperienceResource(experienceDao));
-        environment.jersey().register(new TalentResource(userDao));
-        environment.jersey().register(new SalaryResource(salaryDao));
+        environment.jersey().register(new com.hirelight.resources.ExperienceResource(experienceDao));
+        environment.jersey().register(new com.hirelight.resources.TalentResource(userDao));
+        environment.jersey().register(new com.hirelight.resources.SalaryResource(salaryDao));
+        environment.jersey().register(new com.hirelight.resources.SitemapResource(jobDao));
     }
 }

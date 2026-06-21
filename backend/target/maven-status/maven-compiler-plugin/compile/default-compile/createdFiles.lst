@@ -10,6 +10,7 @@ com\hirelight\db\PasswordResetDao.class
 com\hirelight\resources\PasswordResetResource.class
 com\hirelight\api\Experience.class
 com\hirelight\core\User.class
+com\hirelight\resources\SitemapResource.class
 com\hirelight\resources\ExperienceResource.class
 com\hirelight\auth\JwtAuthenticator.class
 com\hirelight\auth\JwtUtil.class
