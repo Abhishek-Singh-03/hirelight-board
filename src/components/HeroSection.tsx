@@ -1,4 +1,4 @@
-import { Search, TrendingUp, Users, MapPin } from "lucide-react";
+import { Search, TrendingUp, Users, MapPin, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,9 +8,10 @@ interface HeroSectionProps {
   onSearchChange: (value: string) => void;
   onSearchSubmit: () => void;
   totalJobs: number;
+  loading: boolean;
 }
 
-export function HeroSection({ searchTerm, onSearchChange, onSearchSubmit, totalJobs }: HeroSectionProps) {
+export function HeroSection({ searchTerm, onSearchChange, onSearchSubmit, totalJobs, loading }: HeroSectionProps) {
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       onSearchSubmit();
@@ -71,7 +72,13 @@ export function HeroSection({ searchTerm, onSearchChange, onSearchSubmit, totalJ
               <Card key={index} className="p-6 text-center border-0 shadow-md">
                 <CardContent className="p-0 space-y-2">
                   <stat.icon className="h-8 w-8 mx-auto text-primary" />
-                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <div className="text-2xl font-bold">
+                    {loading && stat.label === "Active Jobs" ? (
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto inline-block" />
+                    ) : (
+                      stat.value
+                    )}
+                  </div>
                   <div className="text-sm text-muted-foreground">{stat.label}</div>
                 </CardContent>
               </Card>

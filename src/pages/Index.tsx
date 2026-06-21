@@ -194,6 +194,7 @@ const Index = () => {
             onSearchChange={setSearchTerm}
             onSearchSubmit={handleSearchSubmit}
             totalJobs={jobStats.total}
+            loading={loading}
           />
         </>
       )}
