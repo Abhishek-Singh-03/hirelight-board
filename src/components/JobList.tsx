@@ -20,9 +20,12 @@ interface JobListProps {
   loading: boolean;
   resumeText?: string;
   minLPA?: number;
+  page?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
 }
 
-export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loading, resumeText, minLPA }: JobListProps) {
+export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loading, resumeText, minLPA, page = 1, totalPages = 1, onPageChange }: JobListProps) {
   const [error, setError] = useState<string | null>(null);
   const [isSwipeMode, setIsSwipeMode] = useState(false);
   const [currentSwipeIndex, setCurrentSwipeIndex] = useState(0);
@@ -50,29 +53,19 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
   };
   const [showAuthDialog, setShowAuthDialog] = useState(false);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const jobsPerPage = 12;
-
-  // All filtering is now handled natively by the Java Dropwizard backend!
+  // All jobs come pre-filtered and paginated from the backend
   const filteredJobs = jobs;
+  const jobsToShow   = jobs; // no client-side slicing needed
 
-  // Reset to page 1 whenever the job list changes (filter/search changed)
+  // Reset swipe index when jobs list refreshes
   useEffect(() => {
-    setCurrentPage(1);
     setCurrentSwipeIndex(0);
   }, [jobs]);
 
-  // Pagination logic
-  const indexOfLastJob = currentPage * jobsPerPage;
-  const indexOfFirstJob = indexOfLastJob - jobsPerPage;
-  const jobsToShow = filteredJobs.slice(indexOfFirstJob, indexOfLastJob);
-  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
-
-  const goToPage = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
+  const goToPage = (p: number) => {
+    if (p >= 1 && p <= totalPages && onPageChange) {
+      onPageChange(p);
       setCurrentSwipeIndex(0);
-      // Smooth scroll to top of job list
       const jobsEl = document.getElementById("jobs");
       if (jobsEl) jobsEl.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -238,7 +231,7 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
         </div>
 
           <div className="text-sm text-muted-foreground hidden md:block">
-            Page {currentPage} of {totalPages}
+            Page {page} of {totalPages}
           </div>
         </div>
       </div>
@@ -359,13 +352,13 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
       {!isSwipeMode && totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 pt-6 flex-wrap overflow-x-auto">
           <Button
-          variant="outline"
-          size="sm"
-          disabled={currentPage === 1}
-          onClick={() => goToPage(currentPage - 1)}
-        >
-          Prev
-        </Button>
+            variant="outline"
+            size="sm"
+            disabled={page === 1}
+            onClick={() => goToPage(page - 1)}
+          >
+            Prev
+          </Button>
 
         {(() => {
           const pages: (number | string)[] = [];
@@ -374,9 +367,9 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
           if (totalPages <= maxVisible) {
             for (let i = 1; i <= totalPages; i++) pages.push(i);
           } else {
-            if (currentPage <= 3) {
+            if (page <= 3) {
               pages.push(1, 2, 3, 4, 5, "...", totalPages);
-            } else if (currentPage >= totalPages - 2) {
+            } else if (page >= totalPages - 2) {
               pages.push(
                 1,
                 "...",
@@ -390,9 +383,9 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
               pages.push(
                 1,
                 "...",
-                currentPage - 1,
-                currentPage,
-                currentPage + 1,
+                page - 1,
+                page,
+                page + 1,
                 "...",
                 totalPages
               );
@@ -407,7 +400,7 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
             ) : (
               <Button
                 key={p}
-                variant={currentPage === p ? "default" : "outline"}
+                variant={page === p ? "default" : "outline"}
                 size="sm"
                 onClick={() => goToPage(Number(p))}
               >
@@ -420,8 +413,8 @@ export function JobList({ jobs, searchTerm, selectedCategory, onJobClick, loadin
         <Button
           variant="outline"
           size="sm"
-          disabled={currentPage === totalPages}
-          onClick={() => goToPage(currentPage + 1)}
+          disabled={page === totalPages}
+          onClick={() => goToPage(page + 1)}
         >
           Next
         </Button>

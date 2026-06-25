@@ -18,6 +18,43 @@ public interface JobDao {
               "FROM jobs ORDER BY posted_on DESC")
     List<Job> getAllJobs();
 
+    /**
+     * Paginated + server-side filtered query.
+     * skills: comma-separated skill keywords to match against title/description/category (empty = no filter).
+     * excludeIds: comma-separated job IDs to exclude (already swiped by user). Pass empty string to skip.
+     */
+    @SqlQuery("SELECT CAST(id AS CHAR) as id, title, company, location, apply_link as applyLink, " +
+              "DATE_FORMAT(posted_on, '%d/%m/%Y %H:%i') as postedOn, category, description, salary, type " +
+              "FROM jobs " +
+              "WHERE (:category IS NULL OR :category = '' OR :category = 'all' OR LOWER(category) LIKE CONCAT('%', LOWER(:category), '%') OR (:category = 'remote' AND LOWER(location) LIKE '%remote%')) " +
+              "AND (:search IS NULL OR :search = '' OR LOWER(title) LIKE CONCAT('%', LOWER(:search), '%') OR LOWER(company) LIKE CONCAT('%', LOWER(:search), '%') OR LOWER(location) LIKE CONCAT('%', LOWER(:search), '%')) " +
+              "AND (:location IS NULL OR :location = '' OR LOWER(location) LIKE CONCAT('%', LOWER(:location), '%')) " +
+              "AND (:jobType IS NULL OR :jobType = '' OR LOWER(type) LIKE CONCAT('%', LOWER(:jobType), '%')) " +
+              "AND (:skills IS NULL OR :skills = '' OR LOWER(title) LIKE CONCAT('%', LOWER(:skills), '%') OR LOWER(description) LIKE CONCAT('%', LOWER(:skills), '%') OR LOWER(category) LIKE CONCAT('%', LOWER(:skills), '%')) " +
+              "ORDER BY posted_on DESC " +
+              "LIMIT :limit OFFSET :offset")
+    List<Job> getJobsPaginated(
+              @Bind("category") String category,
+              @Bind("search") String search,
+              @Bind("location") String location,
+              @Bind("jobType") String jobType,
+              @Bind("skills") String skills,
+              @Bind("limit") int limit,
+              @Bind("offset") int offset);
+
+    @SqlQuery("SELECT COUNT(*) FROM jobs " +
+              "WHERE (:category IS NULL OR :category = '' OR :category = 'all' OR LOWER(category) LIKE CONCAT('%', LOWER(:category), '%') OR (:category = 'remote' AND LOWER(location) LIKE '%remote%')) " +
+              "AND (:search IS NULL OR :search = '' OR LOWER(title) LIKE CONCAT('%', LOWER(:search), '%') OR LOWER(company) LIKE CONCAT('%', LOWER(:search), '%') OR LOWER(location) LIKE CONCAT('%', LOWER(:search), '%')) " +
+              "AND (:location IS NULL OR :location = '' OR LOWER(location) LIKE CONCAT('%', LOWER(:location), '%')) " +
+              "AND (:jobType IS NULL OR :jobType = '' OR LOWER(type) LIKE CONCAT('%', LOWER(:jobType), '%')) " +
+              "AND (:skills IS NULL OR :skills = '' OR LOWER(title) LIKE CONCAT('%', LOWER(:skills), '%') OR LOWER(description) LIKE CONCAT('%', LOWER(:skills), '%') OR LOWER(category) LIKE CONCAT('%', LOWER(:skills), '%'))")
+    int countJobsPaginated(
+              @Bind("category") String category,
+              @Bind("search") String search,
+              @Bind("location") String location,
+              @Bind("jobType") String jobType,
+              @Bind("skills") String skills);
+
     @SqlQuery("SELECT CAST(id AS CHAR) as id, title, company, location, apply_link as applyLink, " +
               "DATE_FORMAT(posted_on, '%d/%m/%Y %H:%i') as postedOn, category, description, salary, type " +
               "FROM jobs WHERE recruiter_id = :recruiterId ORDER BY posted_on DESC")

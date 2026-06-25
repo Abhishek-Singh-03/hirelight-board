@@ -48,6 +48,9 @@ const Index = () => {
   const [locationFilter, setLocationFilter] = useState("");
   const [jobTypesFilter, setJobTypesFilter] = useState<string[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const { isAuthenticated, isRecruiter, user } = useAuth();
   const navigate = useNavigate();
@@ -69,29 +72,25 @@ const Index = () => {
         if (minLPA > 0) queryParams.append("minLPA", minLPA.toString());
         if (locationFilter) queryParams.append("location", locationFilter);
         if (jobTypesFilter.length > 0) queryParams.append("jobType", jobTypesFilter.join(","));
+        // Send extracted skills to backend for server-side AI matching
+        if (isAnalyzed && extractedSkills.length > 0) queryParams.append("skills", extractedSkills.join(","));
+        queryParams.append("page", page.toString());
+        queryParams.append("pageSize", "20");
 
-        // Connect directly to our new Dropwizard Backend with dynamic filters!
         const headers: HeadersInit = {};
         if (isAuthenticated && user?.token) {
           headers["Authorization"] = `Bearer ${user.token}`;
         }
         const endpoint = `${API_BASE_URL}/jobs?${queryParams.toString()}`;
         const response = await fetch(endpoint, { headers });
-        if (!response.ok) {
-          throw new Error(`Failed to fetch jobs: ${response.status}`);
-        }
-        
-        // The Java backend now returns exactly what the frontend expects, perfectly filtered
-        const formattedJobs: Job[] = await response.json();
+        if (!response.ok) throw new Error(`Failed to fetch jobs: ${response.status}`);
 
-        // Sort latest first
-        formattedJobs.sort((a, b) => {
-          const dateA = dayjs(a.postedOn, "DD/MM/YYYY HH:mm");
-          const dateB = dayjs(b.postedOn, "DD/MM/YYYY HH:mm");
-          return dateB.valueOf() - dateA.valueOf();
-        });
-
+        const data = await response.json();
+        // Backend now returns { jobs, totalCount, totalPages, page }
+        const formattedJobs: Job[] = data.jobs ?? data;
         setJobs(formattedJobs);
+        setTotalCount(data.totalCount ?? formattedJobs.length);
+        setTotalPages(data.totalPages ?? 1);
       } catch (err) {
         console.error("Failed to load jobs", err);
       } finally {
@@ -100,7 +99,7 @@ const Index = () => {
     };
 
     fetchJobs();
-  }, [selectedCategory, searchTerm, minLPA, locationFilter, jobTypesFilter]);
+  }, [selectedCategory, searchTerm, minLPA, locationFilter, jobTypesFilter, isAnalyzed, extractedSkills, page]);
 
   const handleClearAllFilters = () => {
     setSelectedCategory("all");
@@ -108,6 +107,7 @@ const Index = () => {
     setMinLPA(0);
     setLocationFilter("");
     setJobTypesFilter([]);
+    setPage(1);
   };
 
   const handleSearchSubmit = () => {
@@ -171,9 +171,9 @@ const Index = () => {
     setIsAnalyzed(false);
   };
 
-  // ✅ Compute stats dynamically
+  // Stats use totalCount from backend for accuracy
   const jobStats = {
-    total: jobs.length,
+    total: totalCount,
     remote: jobs.filter((job) => job.location.toLowerCase().includes("remote")).length,
     fresher: jobs.filter((job) => job.category === "fresher").length,
     government: jobs.filter((job) => job.category === "government").length,
@@ -352,6 +352,9 @@ const Index = () => {
               loading={loading}
               resumeText={isAnalyzed ? extractedSkills.join(" ") : ""}
               minLPA={minLPA}
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
             />
           </div>
         </div>

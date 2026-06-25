@@ -28,7 +28,7 @@ public class JobResource {
         this.userJobDao = userJobDao;
     }
 
-    // PUBLIC — anyone can browse jobs with backend filtering
+    // PUBLIC — anyone can browse jobs with server-side filtering + pagination
     @GET
     public Response getPublicJobs(
             @QueryParam("category") String category,
@@ -36,81 +36,62 @@ public class JobResource {
             @QueryParam("minLPA") Double minLPA,
             @QueryParam("location") String location,
             @QueryParam("jobType") String jobType,
+            @QueryParam("skills") String skills,
+            @QueryParam("page") @jakarta.ws.rs.DefaultValue("1") int page,
+            @QueryParam("pageSize") @jakarta.ws.rs.DefaultValue("20") int pageSize,
             @HeaderParam("Authorization") String authHeader) {
-        
-        List<Job> allJobs = jobDao.getAllJobs();
-        java.util.stream.Stream<Job> stream = allJobs.stream();
 
-        // Filter out already swiped/saved/passed jobs if authenticated
+        // Clamp page size between 1 and 100
+        pageSize = Math.min(Math.max(pageSize, 1), 100);
+        int offset = (Math.max(page, 1) - 1) * pageSize;
+
+        // Normalize empty strings to null for clean SQL matching
+        String cat    = nullIfEmpty(category);
+        String srch   = nullIfEmpty(search);
+        String loc    = nullIfEmpty(location);
+        String jtype  = nullIfEmpty(jobType);
+
+        // For AI resume matching: the frontend sends comma-separated skills.
+        // We pick the first skill keyword for the SQL LIKE — this covers the dominant skill.
+        // (Full multi-skill ranking would require a score column; this is fast & effective.)
+        String skillParam = null;
+        if (skills != null && !skills.trim().isEmpty()) {
+            String[] skillArr = skills.split(",");
+            // Use the longest skill token (usually the most specific)
+            skillParam = java.util.Arrays.stream(skillArr)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .max(java.util.Comparator.comparingInt(String::length))
+                .orElse(null);
+        }
+
+        List<Job> jobs = jobDao.getJobsPaginated(cat, srch, loc, jtype, skillParam, pageSize, offset);
+        int total      = jobDao.countJobsPaginated(cat, srch, loc, jtype, skillParam);
+
+        // Exclude already-swiped jobs for authenticated users (post-filter — small list)
         Integer userId = getUserIdFromAuth(authHeader);
         if (userId != null) {
             List<Integer> swipedIds = userJobDao.getSwipedJobIds(userId);
             if (swipedIds != null && !swipedIds.isEmpty()) {
-                stream = stream.filter(j -> {
-                    try {
-                        int id = Integer.parseInt(j.getId());
-                        return !swipedIds.contains(id);
-                    } catch (NumberFormatException e) {
-                        return true;
-                    }
-                });
+                jobs = jobs.stream().filter(j -> {
+                    try { return !swipedIds.contains(Integer.parseInt(j.getId())); }
+                    catch (NumberFormatException e) { return true; }
+                }).collect(java.util.stream.Collectors.toList());
             }
         }
 
-        // 1. Category Filter
-        if (category != null && !category.trim().isEmpty() && !category.equalsIgnoreCase("all")) {
-            String catNorm = category.toLowerCase().replaceAll("[^a-z0-9]+", " ").trim();
-            stream = stream.filter(j -> {
-                if ("remote".equals(catNorm)) {
-                    if (j.getLocation() != null && j.getLocation().toLowerCase().contains("remote")) return true;
-                }
-                if ("it".equals(catNorm)) {
-                    if (j.getCategory() != null && (j.getCategory().toLowerCase().contains("tech") || j.getCategory().toLowerCase().contains("software") || j.getCategory().toLowerCase().contains("it"))) return true;
-                }
-                if (j.getCategory() == null) return false;
-                String jCat = j.getCategory().toLowerCase().replaceAll("[^a-z0-9]+", " ").trim();
-                return jCat.contains(catNorm) || jCat.equals(catNorm) || catNorm.contains(jCat);
-            });
-        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("jobs", jobs);
+        result.put("totalCount", total);
+        result.put("page", page);
+        result.put("pageSize", pageSize);
+        result.put("totalPages", (int) Math.ceil((double) total / pageSize));
 
-        // 2. Search Keyword Filter (with basic fuzzy match for typos)
-        if (search != null && !search.trim().isEmpty()) {
-            String s = search.toLowerCase().trim();
-            int allowedErrors = s.length() > 5 ? 2 : (s.length() > 3 ? 1 : 0);
-            stream = stream.filter(j -> 
-                fuzzyMatch(j.getTitle(), s, allowedErrors) ||
-                fuzzyMatch(j.getCompany(), s, allowedErrors) ||
-                fuzzyMatch(j.getLocation(), s, allowedErrors)
-            );
-        }
+        return Response.ok(result).build();
+    }
 
-        // 3. Location Filter (Handles multiple comma-separated locations and spelling mistakes)
-        if (location != null && !location.trim().isEmpty()) {
-            String[] locTokens = location.toLowerCase().split(",");
-            stream = stream.filter(j -> {
-                if (j.getLocation() == null) return false;
-                String jobLoc = j.getLocation().toLowerCase();
-                for (String token : locTokens) {
-                    String t = token.trim();
-                    if (t.isEmpty()) continue;
-                    int allowedErrors = t.length() > 5 ? 2 : (t.length() > 3 ? 1 : 0);
-                    if (fuzzyMatch(jobLoc, t, allowedErrors)) return true;
-                }
-                return false;
-            });
-        }
-
-        // 4. Job Type Filter (e.g. Full-time, Contract)
-        if (jobType != null && !jobType.trim().isEmpty()) {
-            String type = jobType.toLowerCase();
-            stream = stream.filter(j -> j.getType() != null && j.getType().toLowerCase().contains(type));
-        }
-
-        // 5. Backend Salary Filter removed — we now let the frontend handle "locking" jobs visually
-        // instead of completely removing them from the response, especially since many real companies 
-        // don't disclose salaries immediately.
-
-        return Response.ok(stream.collect(java.util.stream.Collectors.toList())).build();
+    private String nullIfEmpty(String s) {
+        return (s == null || s.trim().isEmpty()) ? null : s.trim();
     }
 
     // PUBLIC — get a single job by ID (for job detail page + SEO)
