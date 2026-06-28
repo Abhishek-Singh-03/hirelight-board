@@ -16,6 +16,8 @@ import Community from "./pages/Community";
 import Salaries from "./pages/Salaries";
 import JobDetail from "./pages/JobDetail";
 import ResetPassword from "./pages/ResetPassword";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import { ParticleBackground } from "./components/ParticleBackground";
 
 const queryClient = new QueryClient();
@@ -40,6 +42,8 @@ function AppRoutes() {
       <Route path="/salaries" element={<Salaries />} />
       <Route path="/jobs/:id" element={<JobDetail />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/blog" element={<Blog />} />
+      <Route path="/blog/:slug" element={<BlogPost />} />
 
       {/* Hidden internal admin — no nav link, direct URL only */}
       <Route path="/admin" element={<Admin />} />

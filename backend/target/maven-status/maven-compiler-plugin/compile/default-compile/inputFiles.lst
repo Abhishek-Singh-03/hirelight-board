@@ -1,5 +1,6 @@
 C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\api\AuthRequest.java
 C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\api\AuthResponse.java
+C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\api\BlogPost.java
 C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\api\Experience.java
 C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\api\Job.java
 C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\api\Salary.java
@@ -8,6 +9,7 @@ C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hir
 C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\auth\JwtAuthenticator.java
 C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\auth\JwtUtil.java
 C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\core\User.java
+C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\db\BlogDao.java
 C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\db\EmailVerificationDao.java
 C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\db\ExperienceDao.java
 C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\db\JobDao.java
@@ -18,6 +20,7 @@ C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hir
 C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\HireLightApplication.java
 C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\HireLightConfiguration.java
 C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\resources\AuthResource.java
+C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\resources\BlogResource.java
 C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\resources\ExperienceResource.java
 C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\resources\JobResource.java
 C:\Users\Abhishek\Desktop\Projects\hirelight-board\backend\src\main\java\com\hirelight\resources\JobSyncResource.java

@@ -5,13 +5,14 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, MapPin, Building2, Calendar, DollarSign, Briefcase, ExternalLink, ArrowLeft, Share2, Bookmark, FileText } from "lucide-react";
+import { Loader2, MapPin, Building2, Calendar, DollarSign, Briefcase, ExternalLink, ArrowLeft, Share2, Bookmark, FileText, Clock, BookOpen, Globe } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
 import { Job } from "@/components/JobCard";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
-
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 const unescapeHtml = (text: string): string => {
   if (!text) return '';
   return text
@@ -200,30 +201,25 @@ export default function JobDetail() {
     
     const unescaped = unescapeHtml(job.description);
     
-    // Check if the description contains HTML tags
+    // Check if the description contains HTML tags (e.g. from Greenhouse sync)
     const hasHTML = /<[a-z][\s\S]*>/i.test(unescaped);
     
     if (hasHTML) {
       return (
         <div 
-          className="job-description-content"
+          className="job-description-content prose prose-invert prose-p:leading-relaxed prose-li:my-1 prose-headings:text-foreground prose-a:text-primary max-w-none"
           dangerouslySetInnerHTML={{ __html: unescaped }} 
         />
       );
     }
 
-    // If it's just plain text, split by newlines
+    // Otherwise treat as Markdown
     return (
-      <>
-        {unescaped.split(/\n+/).map((para, i) => (
-          para.trim() ? (
-            <p key={i} className="mb-4 last:mb-0">
-              {para}
-            </p>
-          ) : null
-
-        ))}
-      </>
+      <div className="prose prose-invert prose-p:leading-relaxed prose-li:my-1 prose-headings:text-foreground prose-a:text-primary max-w-none">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {unescaped}
+        </ReactMarkdown>
+      </div>
     );
   };
 
@@ -275,10 +271,40 @@ export default function JobDetail() {
                       <DollarSign className="h-4 w-4 text-primary/60" /> {job.salary}
                     </span>
                   )}
+                  {job.experienceRequired && (
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="h-4 w-4 text-primary/60" /> {job.experienceRequired}
+                    </span>
+                  )}
+                  {job.educationRequired && (
+                    <span className="flex items-center gap-1.5">
+                      <BookOpen className="h-4 w-4 text-primary/60" /> {job.educationRequired}
+                    </span>
+                  )}
+                  {job.workMode && (
+                    <span className="flex items-center gap-1.5">
+                      <Globe className="h-4 w-4 text-primary/60" /> {job.workMode}
+                    </span>
+                  )}
                   <span className="flex items-center gap-1.5">
                     <Calendar className="h-4 w-4 text-primary/60" /> {formattedDate}
                   </span>
+                  {job.lastDateToApply && (
+                    <span className="flex items-center gap-1.5 text-orange-400 font-medium">
+                      <Calendar className="h-4 w-4" /> Apply By: {job.lastDateToApply}
+                    </span>
+                  )}
                 </div>
+
+                {job.skills && (
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {job.skills.split(',').map(s => s.trim()).filter(s => s).map(skill => (
+                      <Badge key={skill} variant="secondary" className="bg-primary/5 text-primary/80 hover:bg-primary/10">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Right: Company logo placeholder */}

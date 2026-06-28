@@ -13,9 +13,13 @@ import java.util.Optional;
 
 @RegisterBeanMapper(Job.class)
 public interface JobDao {
-    @SqlQuery("SELECT CAST(id AS CHAR) as id, title, company, location, apply_link as applyLink, " +
-              "DATE_FORMAT(posted_on, '%d/%m/%Y %H:%i') as postedOn, category, description, salary, type " +
-              "FROM jobs ORDER BY posted_on DESC")
+
+    String COLS = "CAST(id AS CHAR) as id, title, company, location, apply_link as applyLink, " +
+                  "DATE_FORMAT(posted_on, '%d/%m/%Y %H:%i') as postedOn, category, description, salary, type, " +
+                  "last_date_to_apply as lastDateToApply, experience_required as experienceRequired, " +
+                  "education_required as educationRequired, skills, work_mode as workMode ";
+
+    @SqlQuery("SELECT " + COLS + "FROM jobs ORDER BY posted_on DESC")
     List<Job> getAllJobs();
 
     /**
@@ -23,14 +27,12 @@ public interface JobDao {
      * skills: comma-separated skill keywords to match against title/description/category (empty = no filter).
      * excludeIds: comma-separated job IDs to exclude (already swiped by user). Pass empty string to skip.
      */
-    @SqlQuery("SELECT CAST(id AS CHAR) as id, title, company, location, apply_link as applyLink, " +
-              "DATE_FORMAT(posted_on, '%d/%m/%Y %H:%i') as postedOn, category, description, salary, type " +
-              "FROM jobs " +
+    @SqlQuery("SELECT " + COLS + "FROM jobs " +
               "WHERE (:category IS NULL OR :category = '' OR :category = 'all' OR LOWER(category) LIKE CONCAT('%', LOWER(:category), '%') OR (:category = 'remote' AND LOWER(location) LIKE '%remote%')) " +
               "AND (:search IS NULL OR :search = '' OR LOWER(title) LIKE CONCAT('%', LOWER(:search), '%') OR LOWER(company) LIKE CONCAT('%', LOWER(:search), '%') OR LOWER(location) LIKE CONCAT('%', LOWER(:search), '%')) " +
               "AND (:location IS NULL OR :location = '' OR LOWER(location) LIKE CONCAT('%', LOWER(:location), '%')) " +
               "AND (:jobType IS NULL OR :jobType = '' OR LOWER(type) LIKE CONCAT('%', LOWER(:jobType), '%')) " +
-              "AND (:skills IS NULL OR :skills = '' OR LOWER(title) LIKE CONCAT('%', LOWER(:skills), '%') OR LOWER(description) LIKE CONCAT('%', LOWER(:skills), '%') OR LOWER(category) LIKE CONCAT('%', LOWER(:skills), '%')) " +
+              "AND (:skills IS NULL OR :skills = '' OR LOWER(title) LIKE CONCAT('%', LOWER(:skills), '%') OR LOWER(description) LIKE CONCAT('%', LOWER(:skills), '%') OR LOWER(category) LIKE CONCAT('%', LOWER(:skills), '%') OR LOWER(skills) LIKE CONCAT('%', LOWER(:skills), '%')) " +
               "ORDER BY posted_on DESC " +
               "LIMIT :limit OFFSET :offset")
     List<Job> getJobsPaginated(
@@ -47,7 +49,7 @@ public interface JobDao {
               "AND (:search IS NULL OR :search = '' OR LOWER(title) LIKE CONCAT('%', LOWER(:search), '%') OR LOWER(company) LIKE CONCAT('%', LOWER(:search), '%') OR LOWER(location) LIKE CONCAT('%', LOWER(:search), '%')) " +
               "AND (:location IS NULL OR :location = '' OR LOWER(location) LIKE CONCAT('%', LOWER(:location), '%')) " +
               "AND (:jobType IS NULL OR :jobType = '' OR LOWER(type) LIKE CONCAT('%', LOWER(:jobType), '%')) " +
-              "AND (:skills IS NULL OR :skills = '' OR LOWER(title) LIKE CONCAT('%', LOWER(:skills), '%') OR LOWER(description) LIKE CONCAT('%', LOWER(:skills), '%') OR LOWER(category) LIKE CONCAT('%', LOWER(:skills), '%'))")
+              "AND (:skills IS NULL OR :skills = '' OR LOWER(title) LIKE CONCAT('%', LOWER(:skills), '%') OR LOWER(description) LIKE CONCAT('%', LOWER(:skills), '%') OR LOWER(category) LIKE CONCAT('%', LOWER(:skills), '%') OR LOWER(skills) LIKE CONCAT('%', LOWER(:skills), '%'))")
     int countJobsPaginated(
               @Bind("category") String category,
               @Bind("search") String search,
@@ -55,47 +57,55 @@ public interface JobDao {
               @Bind("jobType") String jobType,
               @Bind("skills") String skills);
 
-    @SqlQuery("SELECT CAST(id AS CHAR) as id, title, company, location, apply_link as applyLink, " +
-              "DATE_FORMAT(posted_on, '%d/%m/%Y %H:%i') as postedOn, category, description, salary, type " +
-              "FROM jobs WHERE recruiter_id = :recruiterId ORDER BY posted_on DESC")
+    @SqlQuery("SELECT " + COLS + "FROM jobs WHERE recruiter_id = :recruiterId ORDER BY posted_on DESC")
     List<Job> getJobsByRecruiter(@Bind("recruiterId") int recruiterId);
 
-    @SqlQuery("SELECT CAST(id AS CHAR) as id, title, company, location, apply_link as applyLink, " +
-              "DATE_FORMAT(posted_on, '%d/%m/%Y %H:%i') as postedOn, category, description, salary, type " +
-              "FROM jobs WHERE id = :id LIMIT 1")
+    @SqlQuery("SELECT " + COLS + "FROM jobs WHERE id = :id LIMIT 1")
     Optional<Job> getJobById(@Bind("id") int id);
 
-    @SqlUpdate("INSERT INTO jobs (title, company, location, apply_link, category, description, salary, type, recruiter_id) " +
-               "VALUES (:title, :company, :location, :applyLink, :category, :description, :salary, :type, :recruiterId)")
+    @SqlUpdate("INSERT INTO jobs (title, company, location, apply_link, category, description, salary, type, recruiter_id, " +
+               "last_date_to_apply, experience_required, education_required, skills, work_mode) " +
+               "VALUES (:title, :company, :location, :applyLink, :category, :description, :salary, :type, :recruiterId, " +
+               ":lastDateToApply, :experienceRequired, :educationRequired, :skills, :workMode)")
     @GetGeneratedKeys
     int insertJob(@Bind("title") String title, @Bind("company") String company,
                   @Bind("location") String location, @Bind("applyLink") String applyLink,
                   @Bind("category") String category, @Bind("description") String description,
                   @Bind("salary") String salary, @Bind("type") String type,
-                  @Bind("recruiterId") int recruiterId);
+                  @Bind("recruiterId") int recruiterId,
+                  @Bind("lastDateToApply") String lastDateToApply, @Bind("experienceRequired") String experienceRequired,
+                  @Bind("educationRequired") String educationRequired, @Bind("skills") String skills, @Bind("workMode") String workMode);
 
     /**
      * Inserts a job only if a job with the same apply_link doesn't already exist.
      * Used by the sync service to avoid duplicates when called multiple times.
      * Returns generated ID (> 0) if inserted, or 0 if already exists.
      */
-    @SqlUpdate("INSERT INTO jobs (title, company, location, apply_link, category, description, salary, type, recruiter_id, posted_on) " +
+    @SqlUpdate("INSERT INTO jobs (title, company, location, apply_link, category, description, salary, type, recruiter_id, posted_on, " +
+               "last_date_to_apply, experience_required, education_required, skills, work_mode) " +
                "SELECT :title, :company, :location, :applyLink, :category, :description, :salary, :type, :recruiterId, " +
-               "STR_TO_DATE(:postedOn, '%d/%m/%Y %H:%i') " +
+               "STR_TO_DATE(:postedOn, '%d/%m/%Y %H:%i'), :lastDateToApply, :experienceRequired, :educationRequired, :skills, :workMode " +
                "FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM jobs WHERE apply_link = :applyLink)")
     @GetGeneratedKeys
     int insertJobIfNotExists(@Bind("title") String title, @Bind("company") String company,
                              @Bind("location") String location, @Bind("applyLink") String applyLink,
                              @Bind("category") String category, @Bind("description") String description,
                              @Bind("salary") String salary, @Bind("type") String type,
-                             @Bind("recruiterId") int recruiterId, @Bind("postedOn") String postedOn);
+                             @Bind("recruiterId") int recruiterId, @Bind("postedOn") String postedOn,
+                             @Bind("lastDateToApply") String lastDateToApply, @Bind("experienceRequired") String experienceRequired,
+                             @Bind("educationRequired") String educationRequired, @Bind("skills") String skills, @Bind("workMode") String workMode);
 
     @SqlUpdate("UPDATE jobs SET title=:title, company=:company, location=:location, apply_link=:applyLink, " +
-               "category=:category, description=:description, salary=:salary WHERE id=:id AND recruiter_id=:recruiterId")
+               "category=:category, description=:description, salary=:salary, type=:type, " +
+               "last_date_to_apply=:lastDateToApply, experience_required=:experienceRequired, " +
+               "education_required=:educationRequired, skills=:skills, work_mode=:workMode " +
+               "WHERE id=:id AND recruiter_id=:recruiterId")
     int updateJob(@Bind("id") int id, @Bind("title") String title, @Bind("company") String company,
                   @Bind("location") String location, @Bind("applyLink") String applyLink,
                   @Bind("category") String category, @Bind("description") String description,
-                  @Bind("salary") String salary, @Bind("recruiterId") int recruiterId);
+                  @Bind("salary") String salary, @Bind("type") String type, @Bind("recruiterId") int recruiterId,
+                  @Bind("lastDateToApply") String lastDateToApply, @Bind("experienceRequired") String experienceRequired,
+                  @Bind("educationRequired") String educationRequired, @Bind("skills") String skills, @Bind("workMode") String workMode);
 
     @SqlUpdate("DELETE FROM jobs WHERE id=:id AND recruiter_id=:recruiterId")
     int deleteJob(@Bind("id") int id, @Bind("recruiterId") int recruiterId);

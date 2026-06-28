@@ -24,6 +24,11 @@ export interface Job {
   description?: string;
   salary?: string;
   type?: string;
+  lastDateToApply?: string;
+  experienceRequired?: string;
+  educationRequired?: string;
+  skills?: string;
+  workMode?: string;
 }
 
 interface JobCardProps {
@@ -58,6 +63,8 @@ export function JobCard({ job, onClick, matchScore, onSwipeLeft, onSwipeRight, i
       .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
       .replace(/&nbsp;/g, ' ').replace(/&#\d+;/g, '')
       .replace(/<[^>]*>/g, '') // strip any remaining HTML tags
+      .replace(/[#_*~`]/g, '') // strip markdown symbols (# * _ ~ `)
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // replace markdown links with just the text
       .replace(/\s+/g, ' ').trim();
   };
 

@@ -14,6 +14,11 @@ public class Job {
     private String salary;
     private String type;
     private String status;
+    private String lastDateToApply;
+    private String experienceRequired;
+    private String educationRequired;
+    private String skills;
+    private String workMode;
 
     public Job() {}
 
@@ -46,6 +51,11 @@ public class Job {
     @JsonProperty public String getSalary() { return salary; }
     @JsonProperty public String getType() { return type; }
     @JsonProperty public String getStatus() { return status; }
+    @JsonProperty public String getLastDateToApply() { return lastDateToApply; }
+    @JsonProperty public String getExperienceRequired() { return experienceRequired; }
+    @JsonProperty public String getEducationRequired() { return educationRequired; }
+    @JsonProperty public String getSkills() { return skills; }
+    @JsonProperty public String getWorkMode() { return workMode; }
 
     public void setId(String id) { this.id = id; }
     public void setTitle(String title) { this.title = title; }
@@ -58,4 +68,9 @@ public class Job {
     public void setSalary(String salary) { this.salary = salary; }
     public void setType(String type) { this.type = type; }
     public void setStatus(String status) { this.status = status; }
+    public void setLastDateToApply(String lastDateToApply) { this.lastDateToApply = lastDateToApply; }
+    public void setExperienceRequired(String experienceRequired) { this.experienceRequired = experienceRequired; }
+    public void setEducationRequired(String educationRequired) { this.educationRequired = educationRequired; }
+    public void setSkills(String skills) { this.skills = skills; }
+    public void setWorkMode(String workMode) { this.workMode = workMode; }
 }

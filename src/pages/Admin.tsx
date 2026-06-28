@@ -8,7 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import {
   PlusCircle, X, Loader2, Building2, DollarSign, LinkIcon,
   Tag, MapPin, Briefcase, Eye, RefreshCw, Lock, Mail,
-  Trash2, Pencil, Check, BarChart3, Users, FileText, Package, Download
+  Trash2, Pencil, Check, BarChart3, Users, FileText, Package, Download, BookOpen, Globe, Calendar, Clock
 } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
 
@@ -18,7 +18,9 @@ interface PostedJob {
   id: string; title: string; company: string;
   location: string; salary: string; type: string;
   category: string; postedOn: string; description: string;
-  applyLink: string;
+  applyLink: string; lastDateToApply?: string;
+  experienceRequired?: string; educationRequired?: string;
+  skills?: string; workMode?: string;
 }
 
 interface Stats {
@@ -29,7 +31,8 @@ interface Stats {
 
 const emptyForm = {
   title: "", company: "GoJobWise", location: "Remote",
-  salary: "", applyLink: "", category: "tech", description: "", type: "full-time"
+  salary: "", applyLink: "", category: "tech", description: "", type: "full-time",
+  lastDateToApply: "", experienceRequired: "", educationRequired: "", skills: "", workMode: "Remote"
 };
 
 const API = API_BASE_URL;
@@ -43,7 +46,7 @@ export default function AdminPanel() {
   const [loginPassword, setLoginPassword] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<"stats" | "post" | "jobs">("stats");
+  const [activeTab, setActiveTab] = useState<"stats" | "post" | "jobs" | "blog">("stats");
   const [posting, setPosting] = useState(false);
   const [jobForm, setJobForm] = useState(emptyForm);
   const [jobs, setJobs] = useState<PostedJob[]>([]);
@@ -51,6 +54,15 @@ export default function AdminPanel() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
   const [syncing, setSyncing] = useState(false);
+
+  // Blog state
+  interface BlogPost { id: number; slug: string; title: string; excerpt: string; content: string; coverImage: string; tags: string; authorName: string; published: boolean; createdAt: string; }
+  const emptyBlog = { slug: "", title: "", excerpt: "", content: "", coverImage: "", tags: "", authorName: "GoJobWise Team", published: false };
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [loadingBlog, setLoadingBlog] = useState(false);
+  const [blogForm, setBlogForm] = useState(emptyBlog);
+  const [editingBlogId, setEditingBlogId] = useState<number | null>(null);
+  const [savingBlog, setSavingBlog] = useState(false);
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -281,6 +293,7 @@ export default function AdminPanel() {
               { key: "stats", label: "📊 Stats" },
               { key: "post",  label: "+ Post Job" },
               { key: "jobs",  label: `📋 My Listings (${jobs.length})` },
+              { key: "blog",  label: `✍️ Blog` },
             ] as const).map(tab => (
               <button key={tab.key} onClick={() => setActiveTab(tab.key)}
                 className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === tab.key ? "bg-primary text-white shadow-md" : "text-zinc-400 hover:text-zinc-200"}`}>
@@ -386,6 +399,11 @@ export default function AdminPanel() {
                     { key: "location", label: "Location",      placeholder: "Bangalore / Remote",     icon: MapPin },
                     { key: "salary",   label: "Salary / CTC",  placeholder: "15-20 LPA",              icon: DollarSign },
                     { key: "applyLink",label: "Apply Link",    placeholder: "https://...",            icon: LinkIcon },
+                    { key: "lastDateToApply", label: "Last Date To Apply", placeholder: "30th Sept", icon: Calendar },
+                    { key: "experienceRequired", label: "Experience", placeholder: "0-2 Years", icon: Clock },
+                    { key: "educationRequired", label: "Education", placeholder: "B.Tech / MCA", icon: BookOpen },
+                    { key: "skills", label: "Skills (comma separated)", placeholder: "React, Node.js", icon: Tag },
+                    { key: "workMode", label: "Work Mode", placeholder: "Remote / Hybrid / On-site", icon: Building2 },
                   ].map(({ key, label, placeholder, icon: Icon }) => (
                     <div key={key} className="space-y-1.5">
                       <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -481,7 +499,9 @@ export default function AdminPanel() {
                           {[
                             { k: "title", ph: "Job Title" }, { k: "company", ph: "Company" },
                             { k: "location", ph: "Location" }, { k: "salary", ph: "Salary" },
-                            { k: "applyLink", ph: "Apply Link" },
+                            { k: "applyLink", ph: "Apply Link" }, { k: "lastDateToApply", ph: "Last Date to Apply" },
+                            { k: "experienceRequired", ph: "Experience" }, { k: "educationRequired", ph: "Education" },
+                            { k: "skills", ph: "Skills" }, { k: "workMode", ph: "Work Mode" },
                           ].map(({ k, ph }) => (
                             <Input key={k} placeholder={ph} value={(editForm as any)[k] || ""}
                               onChange={e => setEditForm(p => ({ ...p, [k]: e.target.value }))}
@@ -563,6 +583,136 @@ export default function AdminPanel() {
             )}
           </div>
         )}
+
+        {/* ── BLOG TAB ──────────────────────────────────────────────────── */}
+        {activeTab === "blog" && (
+          <div className="space-y-6">
+            <Card className="bg-zinc-900 border-zinc-800">
+              <CardHeader><CardTitle className="text-white text-base flex items-center gap-2"><BookOpen className="h-4 w-4 text-primary" />{editingBlogId ? "Edit Post" : "New Blog Post"}</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Title *</label>
+                    <Input placeholder="How to crack TCS NQT 2025" value={blogForm.title}
+                      onChange={e => setBlogForm(p => ({ ...p, title: e.target.value }))}
+                      className="bg-zinc-800 border-zinc-700 text-white" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Slug (URL)</label>
+                    <Input placeholder="auto-generated if empty" value={blogForm.slug}
+                      onChange={e => setBlogForm(p => ({ ...p, slug: e.target.value }))}
+                      className="bg-zinc-800 border-zinc-700 text-white" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Excerpt (shown on blog listing)</label>
+                  <Input placeholder="Short description..." value={blogForm.excerpt}
+                    onChange={e => setBlogForm(p => ({ ...p, excerpt: e.target.value }))}
+                    className="bg-zinc-800 border-zinc-700 text-white" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Content (Markdown supported)</label>
+                  <Textarea rows={14} placeholder="## Introduction&#10;&#10;Write your article here..." value={blogForm.content}
+                    onChange={e => setBlogForm(p => ({ ...p, content: e.target.value }))}
+                    className="bg-zinc-800 border-zinc-700 text-white font-mono text-sm" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Cover Image URL</label>
+                    <Input placeholder="https://..." value={blogForm.coverImage}
+                      onChange={e => setBlogForm(p => ({ ...p, coverImage: e.target.value }))}
+                      className="bg-zinc-800 border-zinc-700 text-white" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Tags (comma separated)</label>
+                    <Input placeholder="interview, resume, career" value={blogForm.tags}
+                      onChange={e => setBlogForm(p => ({ ...p, tags: e.target.value }))}
+                      className="bg-zinc-800 border-zinc-700 text-white" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={blogForm.published}
+                      onChange={e => setBlogForm(p => ({ ...p, published: e.target.checked }))}
+                      className="w-4 h-4 accent-primary" />
+                    <span className="text-sm text-zinc-300">Publish immediately</span>
+                  </label>
+                  <div className="flex gap-2 ml-auto">
+                    {editingBlogId && (
+                      <Button variant="outline" size="sm" onClick={() => { setEditingBlogId(null); setBlogForm(emptyBlog); }}>Cancel</Button>
+                    )}
+                    <Button size="sm" disabled={savingBlog} onClick={async () => {
+                      if (!blogForm.title.trim()) return toast({ title: "Title is required", variant: "destructive" });
+                      setSavingBlog(true);
+                      try {
+                        const url = editingBlogId ? `${API}/blog/admin/${editingBlogId}` : `${API}/blog/admin`;
+                        const method = editingBlogId ? "PUT" : "POST";
+                        const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(blogForm) });
+                        if (!res.ok) throw new Error();
+                        toast({ title: editingBlogId ? "Post updated! ✅" : "Post published! 🎉" });
+                        setBlogForm(emptyBlog); setEditingBlogId(null);
+                        // Reload list
+                        const list = await fetch(`${API}/blog/admin/all`, { headers: authHeaders() });
+                        setBlogPosts(await list.json());
+                      } catch { toast({ title: "Save failed", variant: "destructive" }); }
+                      finally { setSavingBlog(false); }
+                    }}>
+                      {savingBlog ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</> : editingBlogId ? "Update Post" : "Save Post"}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Post List */}
+            <Card className="bg-zinc-900 border-zinc-800">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-white text-base">All Posts</CardTitle>
+                <Button variant="ghost" size="sm" disabled={loadingBlog} onClick={async () => {
+                  setLoadingBlog(true);
+                  try { const r = await fetch(`${API}/blog/admin/all`, { headers: authHeaders() }); setBlogPosts(await r.json()); }
+                  finally { setLoadingBlog(false); }
+                }}>
+                  <RefreshCw className={`h-4 w-4 mr-1 ${loadingBlog ? "animate-spin" : ""}`} /> Refresh
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {blogPosts.length === 0 ? (
+                  <p className="text-zinc-500 text-sm text-center py-8">No posts yet. Write your first one above!</p>
+                ) : blogPosts.map(post => (
+                  <div key={post.id} className="flex items-center justify-between gap-4 py-3 border-b border-zinc-800 last:border-0">
+                    <div className="min-w-0">
+                      <p className="text-white text-sm font-semibold truncate">{post.title}</p>
+                      <p className="text-zinc-500 text-xs mt-0.5 flex items-center gap-2">
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${post.published ? "bg-green-500/15 text-green-400" : "bg-zinc-700 text-zinc-400"}`}>
+                          {post.published ? "Published" : "Draft"}
+                        </span>
+                        <span>{post.createdAt}</span>
+                        {post.tags && <span className="text-zinc-600">{post.tags}</span>}
+                      </p>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-500 hover:text-blue-400" title="Edit" onClick={() => {
+                        setEditingBlogId(post.id);
+                        setBlogForm({ slug: post.slug, title: post.title, excerpt: post.excerpt, content: post.content, coverImage: post.coverImage, tags: post.tags, authorName: post.authorName, published: post.published });
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}><Pencil className="h-3.5 w-3.5" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-500 hover:text-emerald-400" title="View live"
+                        onClick={() => window.open(`/blog/${post.slug}`, "_blank")}><Globe className="h-3.5 w-3.5" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-500 hover:text-red-400" title="Delete" onClick={async () => {
+                        if (!confirm(`Delete "${post.title}"?`)) return;
+                        await fetch(`${API}/blog/admin/${post.id}`, { method: "DELETE", headers: authHeaders() });
+                        setBlogPosts(p => p.filter(x => x.id !== post.id));
+                        toast({ title: "Post deleted" });
+                      }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
       </div>
     </div>
   );

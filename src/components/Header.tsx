@@ -44,6 +44,7 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
     { name: 'Home', href: '/', show: true },
     { name: 'Jobs', href: '/#jobs', show: !isRecruiter },
     { name: 'Salaries 💰', href: '/salaries', show: true },
+    { name: 'Blog ✍️', href: '/blog', show: true },
     { name: 'My Board 📌', href: '/dashboard', show: isAuthenticated && !isRecruiter },
     { name: 'Find Talent 🏢', href: '/talent', show: isAuthenticated && isRecruiter },
     { name: 'Community 💬', href: '/community', show: true },

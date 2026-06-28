@@ -5,6 +5,7 @@ com\hirelight\sync\JobSyncService$SyncResult.class
 com\hirelight\sync\JobSyncService.class
 com\hirelight\api\Job.class
 com\hirelight\HireLightApplication$1.class
+com\hirelight\resources\BlogResource.class
 com\hirelight\HireLightConfiguration.class
 com\hirelight\db\PasswordResetDao.class
 com\hirelight\resources\PasswordResetResource.class
@@ -12,6 +13,7 @@ com\hirelight\api\Experience.class
 com\hirelight\core\User.class
 com\hirelight\resources\SitemapResource.class
 com\hirelight\resources\ExperienceResource.class
+com\hirelight\api\BlogPost.class
 com\hirelight\auth\JwtAuthenticator.class
 com\hirelight\auth\JwtUtil.class
 com\hirelight\db\JobDao.class
@@ -21,6 +23,7 @@ com\hirelight\db\UserDao.class
 com\hirelight\api\AuthRequest.class
 com\hirelight\api\Salary.class
 com\hirelight\resources\JobResource.class
+com\hirelight\db\BlogDao.class
 com\hirelight\api\UserProfile.class
 com\hirelight\db\EmailVerificationDao.class
 com\hirelight\auth\HireLightAuthorizer.class

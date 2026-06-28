@@ -149,7 +149,12 @@ public class JobResource {
             nvl(job.getDescription(), ""),
             nvl(job.getSalary(), "Not disclosed"),
             nvl(job.getType(), "full-time"),
-            user.getId()
+            user.getId(),
+            job.getLastDateToApply(),
+            job.getExperienceRequired(),
+            job.getEducationRequired(),
+            job.getSkills(),
+            nvl(job.getWorkMode(), "Remote")
         );
         return Response.status(201).entity(Map.of("id", newId, "message", "Job posted successfully!")).build();
     }
@@ -166,7 +171,13 @@ public class JobResource {
             nvl(job.getCategory(), "tech"),
             nvl(job.getDescription(), ""),
             nvl(job.getSalary(), "Not disclosed"),
-            user.getId()
+            nvl(job.getType(), "full-time"),
+            user.getId(),
+            job.getLastDateToApply(),
+            job.getExperienceRequired(),
+            job.getEducationRequired(),
+            job.getSkills(),
+            nvl(job.getWorkMode(), "Remote")
         );
         if (updated == 0) return Response.status(404).entity(Map.of("error", "Job not found or not yours.")).build();
         return Response.ok(Map.of("message", "Job updated.")).build();

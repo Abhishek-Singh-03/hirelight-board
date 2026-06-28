@@ -140,7 +140,8 @@ public class JobSyncService {
                 int result = jobDao.insertJobIfNotExists(
                     title, companyName, location, applyLink,
                     category, description, null, "Full-time",
-                    SYSTEM_RECRUITER_ID, postedOn
+                    SYSTEM_RECRUITER_ID, postedOn,
+                    null, null, null, null, null
                 );
                 if (result > 0) inserted++; else skipped++;
 
@@ -185,7 +186,8 @@ public class JobSyncService {
                 int result = jobDao.insertJobIfNotExists(
                     title, companyName, location, applyLink,
                     category, description, null, "Full-time",
-                    SYSTEM_RECRUITER_ID, postedOn
+                    SYSTEM_RECRUITER_ID, postedOn,
+                    null, null, null, null, null
                 );
                 if (result > 0) inserted++; else skipped++;
 

@@ -27,6 +27,7 @@ import com.hirelight.db.SalaryDao;
 import com.hirelight.db.UserJobDao;
 import com.hirelight.db.PasswordResetDao;
 import com.hirelight.db.EmailVerificationDao;
+import com.hirelight.db.BlogDao;
 import com.hirelight.resources.AuthResource;
 import com.hirelight.resources.ExperienceResource;
 import com.hirelight.resources.TalentResource;
@@ -74,6 +75,7 @@ public class HireLightApplication extends Application<HireLightConfiguration> {
         final UserJobDao userJobDao = jdbi.onDemand(UserJobDao.class);
         final PasswordResetDao passwordResetDao = jdbi.onDemand(PasswordResetDao.class);
         final EmailVerificationDao emailVerificationDao = jdbi.onDemand(EmailVerificationDao.class);
+        final BlogDao blogDao = jdbi.onDemand(BlogDao.class);
 
         // --- ENABLE CORS FOR FRONTEND ---
         final FilterRegistration.Dynamic cors = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
@@ -101,6 +103,7 @@ public class HireLightApplication extends Application<HireLightConfiguration> {
         environment.jersey().register(new com.hirelight.resources.ExperienceResource(experienceDao));
         environment.jersey().register(new com.hirelight.resources.TalentResource(userDao));
         environment.jersey().register(new com.hirelight.resources.SalaryResource(salaryDao));
-        environment.jersey().register(new com.hirelight.resources.SitemapResource(jobDao));
+        environment.jersey().register(new com.hirelight.resources.SitemapResource(jobDao, blogDao));
+        environment.jersey().register(new com.hirelight.resources.BlogResource(blogDao));
     }
 }
