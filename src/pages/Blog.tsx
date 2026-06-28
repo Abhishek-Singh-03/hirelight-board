@@ -83,11 +83,11 @@ export default function Blog() {
               >
                 {/* Cover */}
                 {post.coverImage ? (
-                  <div className="h-44 overflow-hidden">
+                  <div className="h-44 overflow-hidden bg-zinc-100">
                     <img
                       src={post.coverImage}
                       alt={post.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>
                 ) : (

@@ -8,6 +8,8 @@ import { Calendar, Clock, ArrowLeft, BookOpen, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { usePageSEO } from "@/lib/seo";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface BlogPost {
   id: number;
@@ -26,22 +28,7 @@ function readingTime(content: string) {
   return Math.max(1, Math.round(words / 200)) + " min read";
 }
 
-// Minimal markdown renderer — handles headers, bold, lists, code blocks, links
-function renderMarkdown(text: string): string {
-  return text
-    .replace(/^### (.+)$/gm, '<h3 class="text-xl font-bold text-white mt-8 mb-3">$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2 class="text-2xl font-bold text-white mt-10 mb-4">$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1 class="text-3xl font-black text-white mt-10 mb-5">$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em class="text-zinc-300">$1</em>')
-    .replace(/`([^`]+)`/g, '<code class="bg-zinc-800 text-primary text-sm px-1.5 py-0.5 rounded font-mono">$1</code>')
-    .replace(/```([\s\S]+?)```/g, '<pre class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 my-4 overflow-x-auto text-sm text-zinc-300 font-mono">$1</pre>')
-    .replace(/^\- (.+)$/gm, '<li class="text-zinc-400 ml-4 list-disc">$1</li>')
-    .replace(/^\d+\. (.+)$/gm, '<li class="text-zinc-400 ml-4 list-decimal">$1</li>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-primary underline hover:text-primary/80" target="_blank" rel="noopener">$1</a>')
-    .replace(/^(?!<[h|l|p|u|o|p|c|b]).+$/gm, '<p class="text-zinc-400 leading-relaxed my-3">$&</p>')
-    .replace(/(<li[\s\S]+?<\/li>)/g, '<ul class="my-3 space-y-1">$1</ul>');
-}
+
 
 export default function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -136,8 +123,8 @@ export default function BlogPostPage() {
 
         {/* Cover image */}
         {post.coverImage && (
-          <div className="rounded-2xl overflow-hidden mb-8 h-64 md:h-80">
-            <img src={post.coverImage} alt={post.title} className="w-full h-full object-cover" />
+          <div className="rounded-2xl overflow-hidden mb-8 h-64 md:h-80 bg-zinc-100 flex items-center justify-center p-8">
+            <img src={post.coverImage} alt={post.title} className="w-full h-full object-contain" />
           </div>
         )}
 
@@ -175,10 +162,11 @@ export default function BlogPostPage() {
         </div>
 
         {/* Content */}
-        <article
-          className="prose-zinc max-w-none"
-          dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content) }}
-        />
+        <article className="prose prose-invert prose-zinc max-w-none prose-p:leading-relaxed prose-headings:font-bold prose-a:text-primary prose-a:underline hover:prose-a:text-primary/80 prose-pre:bg-zinc-900 prose-pre:border prose-pre:border-zinc-800 prose-code:text-primary prose-code:bg-zinc-800 prose-code:rounded prose-code:px-1 prose-code:py-0.5">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {post.content}
+          </ReactMarkdown>
+        </article>
 
         {/* Footer CTA */}
         <div className="mt-16 rounded-2xl border border-primary/20 bg-primary/5 p-8 text-center">
