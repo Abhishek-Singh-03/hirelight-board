@@ -1,4 +1,4 @@
-import { Search, Menu, X, LogIn, LogOut, User } from "lucide-react";
+import { Search, Menu, X, LogIn, LogOut, User, Home, Briefcase, CircleDollarSign, BookOpen, LayoutDashboard, Building2, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -41,13 +41,13 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
   };
 
   const navItems = [
-    { name: 'Home', href: '/', show: true },
-    { name: 'Jobs', href: '/#jobs', show: !isRecruiter },
-    { name: 'Salaries 💰', href: '/salaries', show: true },
-    { name: 'Blog ✍️', href: '/blog', show: true },
-    { name: 'My Board 📌', href: '/dashboard', show: isAuthenticated && !isRecruiter },
-    { name: 'Find Talent 🏢', href: '/talent', show: isAuthenticated && isRecruiter },
-    { name: 'Community 💬', href: '/community', show: true },
+    { name: 'Home', href: '/', icon: Home, show: true },
+    { name: 'Jobs', href: '/#jobs', icon: Briefcase, show: !isRecruiter },
+    { name: 'Salaries', href: '/salaries', icon: CircleDollarSign, show: true },
+    { name: 'Blog', href: '/blog', icon: BookOpen, show: true },
+    { name: 'My Board', href: '/dashboard', icon: LayoutDashboard, show: isAuthenticated && !isRecruiter },
+    { name: 'Find Talent', href: '/talent', icon: Building2, show: isAuthenticated && isRecruiter },
+    { name: 'Community', href: '/community', icon: MessageSquare, show: true },
   ].filter(item => item.show);
 
   const handleNavClick = (href: string) => {
@@ -100,8 +100,9 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
                       handleNavClick(item.href);
                     }
                   }}
-                  className="text-xs xl:text-sm font-medium whitespace-nowrap text-muted-foreground hover:text-primary transition-all duration-200 relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left px-2 xl:px-3 py-2 rounded-lg hover:bg-primary/5"
+                  className="flex items-center gap-1.5 text-xs xl:text-sm font-medium whitespace-nowrap text-muted-foreground hover:text-primary transition-all duration-200 relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left px-2 xl:px-3 py-2 rounded-lg hover:bg-primary/5"
                 >
+                  <item.icon className="h-4 w-4" />
                   {item.name}
                 </a>
               ))}
@@ -167,8 +168,9 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
                       setIsMobileMenuOpen(false);
                     }
                   }}
-                  className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-200 px-4 py-3 rounded-lg hover:bg-primary/5 border border-transparent hover:border-primary/10"
+                  className="flex items-center gap-2.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-200 px-4 py-3 rounded-lg hover:bg-primary/5 border border-transparent hover:border-primary/10"
                 >
+                  <item.icon className="h-4 w-4" />
                   {item.name}
                 </a>
               ))}
