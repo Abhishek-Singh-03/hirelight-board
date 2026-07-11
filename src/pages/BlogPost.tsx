@@ -157,7 +157,7 @@ export default function BlogPostPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background flex flex-col relative">
+    <div className="min-h-screen bg-background flex flex-col relative overflow-x-hidden w-full">
       {/* Scroll Progress Bar */}
       <motion.div 
         className="fixed top-0 left-0 right-0 h-1 bg-primary z-50 origin-left" 
@@ -230,10 +230,10 @@ export default function BlogPostPage() {
         </div>
       )}
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-12 flex flex-col lg:flex-row gap-12 relative">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-12 flex flex-col lg:flex-row gap-12 relative min-w-0">
         
         {/* Main Content Area */}
-        <div className="flex-1 max-w-3xl lg:max-w-4xl mx-auto">
+        <div className="flex-1 w-full max-w-3xl lg:max-w-4xl mx-auto min-w-0">
           {post.coverImage && (
             <div className="mb-8 hidden lg:flex justify-between items-center pb-4 border-b border-zinc-800">
               <Link to="/blog" className="inline-flex items-center gap-2 text-zinc-500 hover:text-white text-sm transition-colors">
