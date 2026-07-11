@@ -23,6 +23,7 @@ interface BlogPost {
   tags: string;
   authorName: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 function readingTime(content: string) {
@@ -169,37 +170,34 @@ export default function BlogPostPage() {
 
       {/* Magazine Hero Header */}
       {post.coverImage ? (
-        <div className="relative w-full min-h-[60vh] flex flex-col items-center justify-end pt-32 pb-16">
-          <div className="absolute inset-0 z-0 bg-zinc-100">
-            <img src={post.coverImage} alt={post.title} className="w-full h-full object-contain p-4 md:p-12 opacity-80" />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-background/40" />
-          </div>
-          
-          <div className="relative z-10 max-w-4xl w-full px-4 text-center mt-auto">
-            {post.tags && (
-              <div className="flex flex-wrap justify-center gap-1.5 md:gap-2 mb-4 md:mb-6">
-                {post.tags.split(",").map(tag => (
-                  <Badge key={tag} variant="secondary" className="bg-primary/20 hover:bg-primary/30 text-primary border-primary/20 backdrop-blur-md text-[10px] md:text-xs">
-                    {tag.trim()}
-                  </Badge>
-                ))}
-              </div>
-            )}
-            
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-6 md:mb-8 drop-shadow-lg px-2">
-              {post.title}
-            </h1>
-            
-            <div className="flex items-center justify-center flex-wrap gap-5 text-sm text-zinc-200 drop-shadow">
-              <span className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-primary/40 border border-primary/20 flex items-center justify-center text-white font-bold backdrop-blur-md shadow-lg">
-                  {post.authorName.charAt(0)}
-                </div>
-                <span className="font-medium text-white">{post.authorName}</span>
-              </span>
-              <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4"/> {post.createdAt}</span>
-              <span className="flex items-center gap-1.5"><Clock className="h-4 w-4"/> {readingTime(post.content)}</span>
+        <div className="w-full max-w-4xl mx-auto px-4 pt-32 pb-8 flex flex-col items-center text-center relative z-10">
+          {post.tags && (
+            <div className="flex flex-wrap justify-center gap-1.5 md:gap-2 mb-4 md:mb-6">
+              {post.tags.split(",").map(tag => (
+                <Badge key={tag} variant="secondary" className="bg-primary/20 hover:bg-primary/30 text-primary border-primary/20 backdrop-blur-md text-[10px] md:text-xs">
+                  {tag.trim()}
+                </Badge>
+              ))}
             </div>
+          )}
+          
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-6 md:mb-8 drop-shadow-lg px-2">
+            {post.title}
+          </h1>
+          
+          <div className="flex items-center justify-center flex-wrap gap-5 text-sm text-zinc-400 mb-10">
+            <span className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/20 flex items-center justify-center text-primary font-bold shadow-lg">
+                {post.authorName.charAt(0)}
+              </div>
+              <span className="font-medium text-white">{post.authorName}</span>
+            </span>
+            <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4"/> {post.createdAt}</span>
+            <span className="flex items-center gap-1.5"><Clock className="h-4 w-4"/> {readingTime(post.content)}</span>
+          </div>
+
+          <div className="w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-zinc-900/50">
+            <img src={post.coverImage} alt={post.title} className="w-full object-cover" />
           </div>
         </div>
       ) : (
