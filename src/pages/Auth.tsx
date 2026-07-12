@@ -298,7 +298,7 @@ export default function Auth() {
                   <label className="text-sm font-medium">Full Name</label>
                   <Input
                     id="auth-name"
-                    placeholder="Abhishek Singh"
+                    placeholder="John Doe"
                     value={name}
                     onChange={e => setName(e.target.value)}
                     required
@@ -312,7 +312,7 @@ export default function Auth() {
                 <Input
                   id="auth-email"
                   type="email"
-                  placeholder="abhishek@example.com"
+                  placeholder="john@example.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required

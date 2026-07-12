@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import Index from "./pages/Index";
@@ -19,6 +20,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import { ParticleBackground } from "./components/ParticleBackground";
+import { PageTransition } from "./components/PageTransition";
 
 const queryClient = new QueryClient();
 
@@ -31,35 +33,39 @@ function ProtectedRoute({ children, recruiterOnly = false }: { children: React.R
 }
 
 function AppRoutes() {
+  const location = useLocation();
+  
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/auth" element={<Auth />} />
-      <Route path="/auth/verify-email" element={<Auth />} />
-      <Route path="/contact" element={<Contact />} />
-      <Route path="/community" element={<Community />} />
-      <Route path="/community/:shareCode" element={<Community />} />
-      <Route path="/salaries" element={<Salaries />} />
-      <Route path="/jobs/:id" element={<JobDetail />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/blog" element={<Blog />} />
-      <Route path="/blog/:slug" element={<BlogPost />} />
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<PageTransition><Index /></PageTransition>} />
+        <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
+        <Route path="/auth/verify-email" element={<PageTransition><Auth /></PageTransition>} />
+        <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
+        <Route path="/community" element={<PageTransition><Community /></PageTransition>} />
+        <Route path="/community/:shareCode" element={<PageTransition><Community /></PageTransition>} />
+        <Route path="/salaries" element={<PageTransition><Salaries /></PageTransition>} />
+        <Route path="/jobs/:id" element={<PageTransition><JobDetail /></PageTransition>} />
+        <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
+        <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
+        <Route path="/blog/:slug" element={<PageTransition><BlogPost /></PageTransition>} />
 
-      {/* Hidden internal admin — no nav link, direct URL only */}
-      <Route path="/admin" element={<Admin />} />
+        {/* Hidden internal admin — no nav link, direct URL only */}
+        <Route path="/admin" element={<PageTransition><Admin /></PageTransition>} />
 
-      {/* Protected: Only logged-in users */}
-      <Route path="/dashboard" element={
-        <ProtectedRoute><Dashboard /></ProtectedRoute>
-      } />
+        {/* Protected: Only logged-in users */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute><PageTransition><Dashboard /></PageTransition></ProtectedRoute>
+        } />
 
-      {/* Protected: Only Recruiters */}
-      <Route path="/talent" element={
-        <ProtectedRoute recruiterOnly><Talent /></ProtectedRoute>
-      } />
+        {/* Protected: Only Recruiters */}
+        <Route path="/talent" element={
+          <ProtectedRoute recruiterOnly><PageTransition><Talent /></PageTransition></ProtectedRoute>
+        } />
 
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+      </Routes>
+    </AnimatePresence>
   );
 }
 

@@ -123,7 +123,7 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
                   <span className="truncate">{user?.name}</span>
                   <span className="text-[10px] opacity-60 font-normal hidden xl:inline">({user?.role})</span>
                 </div>
-                <Button variant="ghost" size="sm" className="gap-1.5 px-2 xl:px-3 text-muted-foreground hover:text-destructive shrink-0" onClick={logout}>
+                <Button variant="ghost" size="sm" className="gap-1.5 px-2 xl:px-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0" onClick={logout}>
                   <LogOut className="h-4 w-4" /> <span className="hidden xl:inline">Logout</span>
                 </Button>
               </div>

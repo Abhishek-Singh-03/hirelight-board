@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Banknote, Building2, Briefcase, Plus, IndianRupee, Search } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { API_BASE_URL } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { usePageSEO } from "@/lib/seo";
 
 interface Salary {
@@ -23,6 +25,8 @@ interface Salary {
 const API = API_BASE_URL;
 
 export default function Salaries() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   usePageSEO({
     title: "Tech Salaries in India | GoJobWise",
     description: "Anonymous salary data for tech roles in India. See real base salary, bonus and stock data for SDE, product managers and more at top tech companies.",
@@ -67,10 +71,19 @@ export default function Salaries() {
       stock: Number(stock) || 0
     };
 
+    if (!user) {
+      toast({ title: "Sign in Required", description: "Please log in to contribute a salary.", variant: "destructive" });
+      navigate("/auth");
+      return;
+    }
+
     try {
       const res = await fetch(`${API}/salaries`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${user.token}`
+        },
         body: JSON.stringify(payload)
       });
 
@@ -117,108 +130,151 @@ export default function Salaries() {
   }, [salaries, searchTerm]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col font-sans">
-      <Header searchTerm="" onSearchChange={() => {}} onSearchSubmit={() => {}} />
+    <div className="min-h-screen bg-background flex flex-col font-sans overflow-x-hidden w-full relative">
+      {/* Animated Glowing Orbs Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse duration-10000" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[35%] h-[35%] bg-emerald-500/10 rounded-full blur-[100px] mix-blend-screen animate-pulse" style={{ animationDuration: '7s' }} />
+      </div>
 
-      <main className="container mx-auto px-4 py-12 flex-1 max-w-6xl">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
+      <div className="relative z-10 w-full">
+        <Header searchTerm="" onSearchChange={() => {}} onSearchSubmit={() => {}} />
+      </div>
+
+      <main className="container mx-auto px-4 py-8 md:py-12 flex-1 w-full max-w-6xl min-w-0 relative z-10">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 md:mb-10 gap-6 w-full">
           <div>
             <h1 className="text-4xl font-extrabold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent flex items-center gap-3">
               <Banknote className="h-10 w-10 text-primary" /> Tech Salaries
             </h1>
-            <p className="text-muted-foreground mt-2 text-lg">Real data, real insights. See what companies are actually paying.</p>
+            <p className="text-muted-foreground mt-2 text-lg">
+              Real data, real insights. See what companies are actually paying.
+              <br/>
+              {user ? "Your submission is 100% anonymous." : "Sign in to share your salary anonymously."}
+            </p>
           </div>
           
-          <Button onClick={() => setShowForm(!showForm)} className="gap-2 font-semibold h-12 px-6 rounded-full shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all">
+          <Button onClick={() => setShowForm(!showForm)} className="gap-2 font-semibold h-12 px-6 rounded-full shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all w-full md:w-auto">
             <Plus className="h-5 w-5" /> Contribute Salary
           </Button>
         </div>
 
         {showForm && (
-          <Card className="mb-10 border-2 border-primary/20 glass animate-in slide-in-from-top-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">Share Anonymously 🤫</CardTitle>
+          <Card className="mb-10 border border-white/10 bg-white/[0.02] backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 via-primary to-emerald-500" />
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-2xl font-bold">Share Anonymously <span className="text-xl">🤫</span></CardTitle>
+              <p className="text-zinc-400 text-sm">Your data will be aggregated to help others. No personally identifiable information is stored.</p>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input placeholder="Company (e.g. Google)" value={company} onChange={e => setCompany(e.target.value)} required />
-                <Input placeholder="Role (e.g. SDE 2)" value={role} onChange={e => setRole(e.target.value)} required />
-                <Input type="number" placeholder="Years of Experience" value={yoe} onChange={e => setYoe(e.target.value ? Number(e.target.value) : "")} required min="0" />
-                <Input type="number" placeholder="Base Salary (LPA)" value={base} onChange={e => setBase(e.target.value ? Number(e.target.value) : "")} required min="1" />
-                <Input type="number" placeholder="Annual Bonus (LPA) - Optional" value={bonus} onChange={e => setBonus(e.target.value ? Number(e.target.value) : "")} min="0" />
-                <Input type="number" placeholder="Stock/RSUs per year (LPA) - Optional" value={stock} onChange={e => setStock(e.target.value ? Number(e.target.value) : "")} min="0" />
-                <div className="md:col-span-2 flex justify-end gap-3 mt-4">
-                  <Button variant="ghost" type="button" onClick={() => setShowForm(false)}>Cancel</Button>
-                  <Button type="submit" className="font-bold">Submit Anonymously</Button>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Company</label>
+                    <Input placeholder="e.g. Google" value={company} onChange={e => setCompany(e.target.value)} required className="h-12 bg-white/[0.03] border-white/10 hover:border-white/20 focus:bg-white/[0.05] focus:border-primary/50 transition-all rounded-xl" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Role</label>
+                    <Input placeholder="e.g. SDE 2" value={role} onChange={e => setRole(e.target.value)} required className="h-12 bg-white/[0.03] border-white/10 hover:border-white/20 focus:bg-white/[0.05] focus:border-primary/50 transition-all rounded-xl" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Years of Experience</label>
+                    <Input type="number" placeholder="e.g. 3" value={yoe} onChange={e => setYoe(e.target.value ? Number(e.target.value) : "")} required min="0" className="h-12 bg-white/[0.03] border-white/10 hover:border-white/20 focus:bg-white/[0.05] focus:border-primary/50 transition-all rounded-xl" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-emerald-400/80 uppercase tracking-wider">Base Salary (LPA)</label>
+                    <Input type="number" placeholder="e.g. 24" value={base} onChange={e => setBase(e.target.value ? Number(e.target.value) : "")} required min="1" className="h-12 bg-white/[0.03] border-white/10 hover:border-white/20 focus:bg-emerald-500/10 focus:border-emerald-500/50 transition-all rounded-xl" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Annual Bonus (LPA)</label>
+                    <Input type="number" placeholder="Optional" value={bonus} onChange={e => setBonus(e.target.value ? Number(e.target.value) : "")} min="0" className="h-12 bg-white/[0.03] border-white/10 hover:border-white/20 focus:bg-white/[0.05] focus:border-primary/50 transition-all rounded-xl" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Stock / RSUs (LPA)</label>
+                    <Input type="number" placeholder="Optional" value={stock} onChange={e => setStock(e.target.value ? Number(e.target.value) : "")} min="0" className="h-12 bg-white/[0.03] border-white/10 hover:border-white/20 focus:bg-white/[0.05] focus:border-primary/50 transition-all rounded-xl" />
+                  </div>
+                </div>
+                
+                <div className="pt-4 border-t border-white/5 flex flex-col md:flex-row justify-end gap-3">
+                  <Button variant="ghost" type="button" onClick={() => setShowForm(false)} className="rounded-xl h-11 hover:bg-red-500/10 hover:text-red-500 transition-colors">Cancel</Button>
+                  <Button type="submit" className="rounded-xl h-11 px-8 font-bold bg-primary hover:bg-primary/90 text-white shadow-[0_0_15px_-3px_var(--primary)] hover:shadow-[0_0_25px_0_var(--primary)] transition-all">Submit Anonymously</Button>
                 </div>
               </form>
             </CardContent>
           </Card>
         )}
 
-        <div className="relative mb-8">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input 
-            placeholder="Search by company or role (e.g. Amazon, SDE 2)..." 
-            className="pl-12 h-14 text-lg bg-background/50 backdrop-blur border-primary/20 rounded-2xl focus-visible:ring-primary shadow-sm"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="relative mb-10 w-full max-w-2xl mx-auto">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-violet-500/20 to-emerald-500/20 blur-xl opacity-50 rounded-full" />
+          <div className="relative">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input 
+              placeholder="Search by company or role (e.g. Google, SDE)..." 
+              className="w-full pl-14 pr-6 h-16 text-sm md:text-lg bg-white/[0.02] backdrop-blur-xl border border-white/10 hover:border-white/20 rounded-full focus-visible:ring-primary shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
 
         {groupedData.length === 0 ? (
-          <div className="text-center py-20 bg-background/30 rounded-3xl border border-dashed border-border/50">
-            <Banknote className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-            <h3 className="text-xl font-semibold mb-2">No salaries found</h3>
+          <div className="text-center py-24 bg-white/[0.02] backdrop-blur-xl rounded-3xl border border-dashed border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
+            <Banknote className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+            <h3 className="text-2xl font-bold mb-2 text-white">No salaries found</h3>
             <p className="text-muted-foreground">Be the first to share salary data for this search!</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {groupedData.map((data, idx) => (
-              <Card key={idx} className="border border-border/50 hover:border-primary/50 transition-all hover:-translate-y-1 shadow-sm hover:shadow-md glass bg-background/40">
-                <CardHeader className="pb-2">
+              <Card key={idx} className="relative overflow-hidden group bg-white/[0.02] backdrop-blur-xl border-white/5 hover:border-white/20 transition-all duration-300 hover:-translate-y-1 shadow-[0_8px_32px_rgba(0,0,0,0.2)] hover:shadow-[0_16px_48px_rgba(124,58,237,0.15)]">
+                {/* Subtle top gradient line */}
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                
+                <CardHeader className="pb-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-xl font-bold flex items-center gap-2">
-                        <Building2 className="h-5 w-5 text-primary" /> {data.company}
+                      <CardTitle className="text-xl font-bold flex items-center gap-2 text-white group-hover:text-primary transition-colors">
+                        <Building2 className="h-5 w-5 opacity-70" /> {data.company}
                       </CardTitle>
-                      <p className="text-sm font-medium text-muted-foreground mt-1 flex items-center gap-1.5">
-                        <Briefcase className="h-4 w-4" /> {data.role}
+                      <p className="text-sm font-medium text-zinc-400 mt-1.5 flex items-center gap-1.5">
+                        <Briefcase className="h-4 w-4 opacity-70" /> {data.role}
                       </p>
                     </div>
-                    <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold border border-primary/20">
+                    <div className="bg-white/5 text-zinc-300 px-3 py-1 rounded-full text-xs font-bold border border-white/10 group-hover:border-primary/30 group-hover:text-primary transition-colors">
                       {data.yoe} YOE
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="mt-4">
-                    <p className="text-3xl font-black text-foreground flex items-center gap-1">
-                      <IndianRupee className="h-7 w-7" /> {data.avgTotal}L <span className="text-sm font-normal text-muted-foreground ml-1">/ yr</span>
+                  <div className="mb-6">
+                    <p className="text-sm text-emerald-400/80 uppercase tracking-wider font-semibold mb-1">Total CTC</p>
+                    <p className="text-4xl font-black text-white flex items-baseline gap-1">
+                      <IndianRupee className="h-6 w-6 text-emerald-400/80" strokeWidth={3} /> {data.avgTotal}L
+                      <span className="text-sm font-semibold text-zinc-500 ml-1">/yr</span>
                     </p>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mt-1">Total Compensation</p>
                   </div>
                   
-                  <div className="mt-6 space-y-2 text-sm bg-background/50 p-3 rounded-xl border border-border/50">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Base Salary</span>
-                      <span className="font-semibold text-foreground">₹{data.avgBase}L</span>
+                  <div className="space-y-2.5 text-sm bg-black/20 p-4 rounded-xl border border-white/5">
+                    <div className="flex justify-between items-center">
+                      <span className="text-zinc-400">Base Salary</span>
+                      <span className="font-bold text-white">₹{data.avgBase}L</span>
                     </div>
                     {(data.avgBonus > 0 || data.avgStock > 0) && (
                       <>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Bonus</span>
-                          <span className="font-semibold text-foreground">₹{data.avgBonus}L</span>
+                        <div className="w-full h-px bg-white/5 my-2" />
+                        <div className="flex justify-between items-center">
+                          <span className="text-zinc-400">Bonus</span>
+                          <span className="font-semibold text-zinc-200">₹{data.avgBonus}L</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Stock / RSUs</span>
-                          <span className="font-semibold text-foreground">₹{data.avgStock}L</span>
+                        <div className="flex justify-between items-center">
+                          <span className="text-zinc-400">Stock / RSUs</span>
+                          <span className="font-semibold text-zinc-200">₹{data.avgStock}L</span>
                         </div>
                       </>
                     )}
                   </div>
                   
-                  <div className="mt-4 text-xs text-center text-muted-foreground opacity-60">
+                  <div className="mt-5 text-xs text-center font-medium text-zinc-500">
                     Based on {data.samples} anonymously submitted {data.samples === 1 ? 'profile' : 'profiles'}
                   </div>
                 </CardContent>

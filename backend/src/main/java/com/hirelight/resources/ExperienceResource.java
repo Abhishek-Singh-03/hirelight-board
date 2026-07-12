@@ -3,6 +3,7 @@ package com.hirelight.resources;
 import com.hirelight.api.Experience;
 import com.hirelight.core.User;
 import com.hirelight.db.ExperienceDao;
+import com.hirelight.auth.RateLimited;
 import io.dropwizard.auth.Auth;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -43,6 +44,7 @@ public class ExperienceResource {
     }
 
     @POST
+    @RateLimited(requests = 5, windowSeconds = 60)
     public Response createExperience(@Auth User user, Experience exp) {
         // ── Validate required fields ──────────────────────────────────────────
         if (exp.getJobTitle() == null || exp.getJobTitle().trim().isEmpty())

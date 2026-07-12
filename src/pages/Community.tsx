@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,9 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, ThumbsUp, Calendar, Building2, PenLine, EyeOff, Eye, X, CheckCircle2, AlertCircle, Share2, Copy } from "lucide-react";
+import { MessageSquare, ThumbsUp, Calendar, Building2, PenLine, EyeOff, Eye, X, CheckCircle2, AlertCircle, Share2, Copy, User } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
 import { usePageSEO } from "@/lib/seo";
+import MDEditor, { commands } from '@uiw/react-md-editor';
+import ReactMarkdown from 'react-markdown';
 
 export interface ExperiencePost {
   id: string;
@@ -33,7 +36,7 @@ export default function Community() {
 
   const { shareCode } = useParams<{ shareCode: string }>();
   const navigate = useNavigate();
-  
+
   const [searchTerm, setSearchTerm] = useState("");
   const [posts, setPosts] = useState<ExperiencePost[]>([]);
   const [selectedPost, setSelectedPost] = useState<ExperiencePost | null>(null);
@@ -46,21 +49,22 @@ export default function Community() {
   const [form, setForm] = useState({
     jobTitle: "", company: "", type: "offer" as "offer" | "interview" | "rejection", text: ""
   });
-  
+
   // Track upvoted posts to prevent multiple upvotes
   const [upvotedPosts, setUpvotedPosts] = useState<Set<string>>(() => {
     const saved = localStorage.getItem("hl_upvoted");
     return saved ? new Set(JSON.parse(saved)) : new Set();
   });
 
-  const token = localStorage.getItem("token");
+  const { user } = useAuth();
+  const token = user?.token;
 
   useEffect(() => {
     fetch(`${API}/community`)
       .then(res => res.json())
       .then((data: ExperiencePost[]) => {
         setPosts(data);
-        
+
         // Auto-open post if someone clicked a shortcode shared link
         if (shareCode) {
           const postToOpen = data.find(p => p.shareCode === shareCode);
@@ -79,7 +83,7 @@ export default function Community() {
 
   const handleUpvote = (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    
+
     if (upvotedPosts.has(id)) {
       showToast('error', "You've already found this helpful!");
       return;
@@ -90,7 +94,7 @@ export default function Community() {
     if (selectedPost?.id === id) {
       setSelectedPost(prev => prev ? { ...prev, upvotes: prev.upvotes + 1 } : null);
     }
-    
+
     // Save to local storage
     const newUpvoted = new Set(upvotedPosts).add(id);
     setUpvotedPosts(newUpvoted);
@@ -103,12 +107,12 @@ export default function Community() {
 
   const handleShare = (post: ExperiencePost, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    
+
     // Use the short shareCode if available, fallback to id if not
     const code = post.shareCode || post.id;
     const postUrl = `${window.location.origin}/community/${code}`;
     const textToShare = `Read this interview experience for ${post.jobTitle} at ${post.company}:\n\n${postUrl}`;
-    
+
     if (navigator.share) {
       navigator.share({
         title: `${post.company} Interview Experience`,
@@ -165,8 +169,16 @@ export default function Community() {
   );
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Header searchTerm={searchTerm} onSearchChange={setSearchTerm} onSearchSubmit={() => {}} />
+    <div className="min-h-screen bg-background flex flex-col font-sans overflow-x-hidden w-full relative">
+      {/* Animated Glowing Orbs Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse duration-10000" />
+        <div className="absolute bottom-[-10%] left-[-5%] w-[35%] h-[35%] bg-emerald-500/10 rounded-full blur-[100px] mix-blend-screen animate-pulse" style={{ animationDuration: '7s' }} />
+      </div>
+
+      <div className="relative z-10 w-full">
+        <Header searchTerm={searchTerm} onSearchChange={setSearchTerm} onSearchSubmit={() => { }} />
+      </div>
 
       {/* Toast notification */}
       {toast && (
@@ -182,12 +194,11 @@ export default function Community() {
         </div>
       )}
 
-      <main className="container mx-auto px-4 py-12 flex-1 relative z-10">
-        {/* Header */}
-        <div className="text-center mb-12 space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-2">
+      <main className="container mx-auto px-4 py-8 md:py-12 flex-1 w-full max-w-6xl min-w-0 relative z-10">
+        <div className="text-center mb-10 md:mb-16 space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-semibold mb-2">
             <MessageSquare className="h-4 w-4" />
-            Interview Intel
+            Community Insights
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
             Developer Community
@@ -209,50 +220,54 @@ export default function Community() {
 
           {/* ── Share Form ───────────────────────────────────────────────── */}
           {showForm && (
-            <Card className="border-2 border-primary/30 glass shadow-[0_0_30px_-10px_var(--primary)]">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xl font-bold flex items-center gap-2">
+            <Card className="mb-10 border border-white/10 bg-white/[0.02] backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 via-primary to-emerald-500" />
+              <CardHeader className="pb-4">
+                <CardTitle className="text-2xl font-bold flex items-center gap-2">
                   <PenLine className="h-5 w-5 text-primary" /> Share Your Interview Experience
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">Help other developers — share your real story.</p>
+                <p className="text-sm text-zinc-400">Help other developers — share your real story.</p>
               </CardHeader>
-              <CardContent className="space-y-4 pt-2">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Job Title</label>
+              <CardContent className="space-y-6 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Job Title</label>
                     <Input
                       id="exp-job-title"
                       placeholder="e.g. SDE 2, Backend Engineer"
                       value={form.jobTitle}
                       onChange={e => setForm(f => ({ ...f, jobTitle: e.target.value }))}
-                      className="rounded-xl"
+                      className="h-12 bg-white/[0.03] border-white/10 hover:border-white/20 focus:bg-white/[0.05] focus:border-primary/50 transition-all rounded-xl"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Company</label>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Company</label>
                     <Input
                       id="exp-company"
                       placeholder="e.g. Groww, Razorpay"
                       value={form.company}
                       onChange={e => setForm(f => ({ ...f, company: e.target.value }))}
-                      className="rounded-xl"
+                      className="h-12 bg-white/[0.03] border-white/10 hover:border-white/20 focus:bg-white/[0.05] focus:border-primary/50 transition-all rounded-xl"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Outcome</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Outcome</label>
                   <div className="flex gap-2 flex-wrap">
                     {(['offer', 'interview', 'rejection'] as const).map(t => (
                       <button
                         key={t}
                         id={`exp-type-${t}`}
                         onClick={() => setForm(f => ({ ...f, type: t }))}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
-                          form.type === t
-                            ? 'bg-primary text-primary-foreground border-primary'
-                            : 'bg-background/40 border-border hover:border-primary/50'
-                        }`}
+                        className={`px-5 py-2.5 rounded-xl text-sm font-semibold border transition-all ${form.type === t
+                            ? t === 'offer'
+                              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_-3px_rgba(16,185,129,0.3)]'
+                              : t === 'rejection'
+                                ? 'bg-red-500/20 text-red-400 border-red-500/50 shadow-[0_0_15px_-3px_rgba(239,68,68,0.3)]'
+                                : 'bg-primary/20 text-primary border-primary/50 shadow-[0_0_15px_-3px_var(--primary)]'
+                            : 'bg-white/[0.03] text-zinc-300 border-white/10 hover:border-white/30 hover:bg-white/[0.05]'
+                          }`}
                       >
                         {t === 'offer' ? '🎉 Got Offer' : t === 'interview' ? '⏳ In Process' : '❌ Rejected'}
                       </button>
@@ -260,53 +275,54 @@ export default function Community() {
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Your Experience <span className="text-muted-foreground/60 normal-case font-normal">(min 50 chars)</span>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">
+                    Your Experience <span className="text-zinc-500 normal-case font-normal">(min 50 chars)</span>
                   </label>
-                  <Textarea
-                    id="exp-text"
-                    placeholder="Walk us through your interview process — rounds, topics asked, salary offered, tips for others..."
-                    value={form.text}
-                    onChange={e => setForm(f => ({ ...f, text: e.target.value }))}
-                    className="rounded-xl min-h-[140px] resize-y"
-                  />
-                  <p className="text-xs text-muted-foreground text-right">{form.text.length} / 5000</p>
+                  <div data-color-mode="dark" className="rounded-xl overflow-hidden border border-white/10 shadow-[0_0_15px_-3px_rgba(0,0,0,0.3)]">
+                    <MDEditor
+                      value={form.text}
+                      onChange={(val) => setForm(f => ({ ...f, text: val || "" }))}
+                      preview="edit"
+                      height={250}
+                      className="bg-transparent!"
+                      commands={commands.getCommands().filter((cmd: any) => cmd.name !== 'image')}
+                      extraCommands={[]}
+                    />
+                  </div>
+                  <p className="text-xs text-zinc-500 text-right">{form.text.length} / 5000</p>
                 </div>
 
                 {/* Anonymous toggle */}
                 <div
                   id="exp-anonymous-toggle"
                   onClick={() => setIsAnonymous(v => !v)}
-                  className={`flex items-center gap-3 p-4 rounded-2xl border cursor-pointer transition-all select-none ${
-                    isAnonymous
-                      ? 'bg-primary/10 border-primary/40'
-                      : 'bg-background/30 border-border hover:border-primary/30'
-                  }`}
+                  className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all select-none ${isAnonymous
+                      ? 'bg-primary/10 border-primary/40 shadow-[0_0_15px_-5px_var(--primary)]'
+                      : 'bg-white/[0.03] border-white/10 hover:border-white/20'
+                    }`}
                 >
-                  <div className={`flex items-center justify-center h-10 w-10 rounded-xl transition-all ${
-                    isAnonymous ? 'bg-primary/20 text-primary' : 'bg-muted/40 text-muted-foreground'
-                  }`}>
+                  <div className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${isAnonymous ? 'bg-primary/20 text-primary' : 'bg-white/5 text-zinc-400'
+                    }`}>
                     {isAnonymous ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-sm">
+                    <p className="font-semibold text-sm text-zinc-200">
                       {isAnonymous ? 'Posting Anonymously' : 'Post with your name'}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-xs text-zinc-400 mt-0.5">
                       {isAnonymous
                         ? 'Your name will NOT be shown. Only "Anonymous" will appear.'
                         : 'Your display name will be visible to everyone. Click to hide it.'}
                     </p>
                   </div>
-                  <div className={`h-5 w-9 rounded-full transition-all flex items-center px-0.5 ${
-                    isAnonymous ? 'bg-primary justify-end' : 'bg-muted justify-start'
-                  }`}>
+                  <div className={`h-5 w-9 rounded-full transition-all flex items-center px-0.5 ${isAnonymous ? 'bg-primary justify-end' : 'bg-zinc-600 justify-start'
+                    }`}>
                     <div className="h-4 w-4 rounded-full bg-white shadow" />
                   </div>
                 </div>
 
-                {!token && (
+                {!user && (
                   <p className="text-sm text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-xl px-4 py-3">
                     ⚠️ You must be logged in to post. Your name will show based on your account.
                   </p>
@@ -314,7 +330,7 @@ export default function Community() {
 
                 <Button
                   id="exp-submit-btn"
-                  className="w-full rounded-2xl h-12 font-semibold text-base"
+                  className="w-full rounded-xl h-12 font-bold text-base bg-primary hover:bg-primary/90 text-white shadow-[0_0_15px_-3px_var(--primary)] hover:shadow-[0_0_25px_0_var(--primary)] transition-all"
                   onClick={handleSubmit}
                   disabled={submitting}
                 >
@@ -328,49 +344,53 @@ export default function Community() {
           {filtered.map(post => (
             <Card
               key={post.id}
-              className="border-2 border-primary/10 glass glass-hover transition-all duration-300 cursor-pointer"
+              className="relative overflow-hidden group bg-white/[0.02] backdrop-blur-xl border-white/5 hover:border-white/20 transition-all duration-300 cursor-pointer hover:-translate-y-1 shadow-[0_8px_32px_rgba(0,0,0,0.2)] hover:shadow-[0_16px_48px_rgba(124,58,237,0.15)]"
               onClick={() => setSelectedPost(post)}
             >
-              <CardHeader className="pb-2">
-                <div className="flex flex-col md:flex-row justify-between items-start gap-3">
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+              <CardHeader className="pb-3">
+                <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                   <div className="w-full md:w-auto">
-                    <CardTitle className="text-lg md:text-xl font-bold flex items-center gap-2 flex-wrap">
-                      <Building2 className="h-5 w-5 text-muted-foreground" />
+                    <CardTitle className="text-xl font-bold flex items-center gap-2 text-white group-hover:text-primary transition-colors">
+                      <Building2 className="h-5 w-5 opacity-70" />
                       {post.jobTitle} at {post.company}
                     </CardTitle>
-                    <div className="text-sm text-muted-foreground mt-1 flex items-center gap-4">
-                      <span className="flex items-center gap-1">
+                    <div className="text-sm text-zinc-400 mt-2 flex items-center gap-4">
+                      <span className="flex items-center gap-1.5 font-medium">
                         {post.author === 'Anonymous'
-                          ? <><EyeOff className="h-3 w-3" /> Anonymous</>
-                          : <>By: {post.author}</>
+                          ? <><EyeOff className="h-3.5 w-3.5" /> Anonymous</>
+                          : <><User className="h-3.5 w-3.5" /> {post.author}</>
                         }
                       </span>
-                      <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {post.date}</span>
+                      <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {post.date}</span>
                     </div>
                   </div>
                   <Badge variant={post.type === 'offer' ? 'default' : 'secondary'}
-                    className={post.type === 'offer' ? 'bg-green-500/20 text-green-500 border-green-500/30' : ''}>
+                    className={`shrink-0 ${post.type === 'offer' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : post.type === 'rejection' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-white/10 text-white border-white/20'}`}>
                     {post.type === 'offer' ? '🎉 Received Offer' : post.type === 'rejection' ? '❌ Rejected' : '⏳ In Process'}
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="bg-background/40 p-4 rounded-xl border border-border/50 text-sm md:text-base leading-relaxed line-clamp-3">
-                  {post.text}
+                <div className="bg-black/20 p-4 rounded-xl border border-white/5 text-sm md:text-base leading-relaxed text-zinc-300 relative max-h-[120px] overflow-hidden">
+                  <div className="prose prose-sm prose-invert max-w-none line-clamp-3">
+                    <ReactMarkdown>{post.text}</ReactMarkdown>
+                  </div>
                 </div>
-                <div className="mt-4 flex items-center gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className={`gap-2 transition-colors ${upvotedPosts.has(post.id) ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-primary hover:bg-primary/10'}`}
+                <div className="mt-5 flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`gap-2 transition-all rounded-lg ${upvotedPosts.has(post.id) ? 'text-primary bg-primary/10' : 'text-zinc-400 hover:text-white hover:bg-white/10'}`}
                     onClick={(e) => handleUpvote(post.id, e)}
                   >
                     <ThumbsUp className="h-4 w-4" /> {post.upvotes} Helpful
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="gap-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-2 text-zinc-400 hover:text-white hover:bg-white/10 transition-all rounded-lg"
                     onClick={(e) => handleShare(post, e)}
                   >
                     <Share2 className="h-4 w-4" /> Share
@@ -422,7 +442,7 @@ export default function Community() {
                     <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {selectedPost.date}</span>
                   </div>
                 </div>
-                <Button variant="outline" size="icon" 
+                <Button variant="outline" size="icon"
                   onClick={() => {
                     setSelectedPost(null);
                     if (shareCode) navigate("/community", { replace: true });
@@ -436,14 +456,8 @@ export default function Community() {
                 {selectedPost.type === 'offer' ? '🎉 Received Offer' : selectedPost.type === 'rejection' ? '❌ Rejected' : '⏳ In Process'}
               </Badge>
 
-              <div className="prose prose-invert max-w-none">
-                {selectedPost.text.split('\n').map((paragraph, idx) => (
-                  paragraph.trim() ? (
-                    <p key={idx} className="text-base md:text-lg leading-relaxed text-foreground/90 mb-4 tracking-wide font-medium">
-                      {paragraph}
-                    </p>
-                  ) : <br key={idx} />
-                ))}
+              <div className="prose prose-invert max-w-none bg-black/20 p-6 rounded-2xl border border-white/5 text-zinc-200 shadow-inner">
+                <ReactMarkdown>{selectedPost.text}</ReactMarkdown>
               </div>
 
               <div className="mt-12 pt-6 border-t border-border/50 flex flex-col sm:flex-row gap-4 justify-between items-center bg-background/30 p-4 rounded-xl">
@@ -463,7 +477,7 @@ export default function Community() {
               </div>
 
               <div className="mt-4 sm:hidden flex justify-center">
-                <Button variant="ghost" className="w-full rounded-xl border border-border/50 bg-background/50" 
+                <Button variant="ghost" className="w-full rounded-xl border border-border/50 bg-background/50"
                   onClick={() => {
                     setSelectedPost(null);
                     if (shareCode) navigate("/community", { replace: true });

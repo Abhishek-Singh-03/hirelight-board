@@ -10,6 +10,7 @@ import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import com.hirelight.core.User;
 import com.hirelight.auth.HireLightAuthorizer;
 import com.hirelight.auth.JwtAuthenticator;
+import com.hirelight.auth.RateLimitFilter;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.FilterRegistration;
@@ -94,6 +95,7 @@ public class HireLightApplication extends Application<HireLightConfiguration> {
         ));
         environment.jersey().register(RolesAllowedDynamicFeature.class);
         environment.jersey().register(new AuthValueFactoryProvider.Binder<>(User.class));
+        environment.jersey().register(RateLimitFilter.class);
 
         // --- REGISTER ALL RESOURCES ---
         environment.jersey().register(new AuthResource(userDao, emailVerificationDao));
