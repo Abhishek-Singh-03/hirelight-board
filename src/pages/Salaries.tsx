@@ -88,6 +88,13 @@ export default function Salaries() {
       });
 
       if (!res.ok) {
+        if (res.status === 401) {
+          // Token is expired or invalid
+          localStorage.removeItem("hl_auth");
+          toast({ title: "Session Expired", description: "Please log in again.", variant: "destructive" });
+          window.location.href = "/auth";
+          return;
+        }
         try {
           const errData = await res.json();
           throw new Error(errData.error || "Failed to submit.");
