@@ -87,14 +87,21 @@ export default function Salaries() {
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) throw new Error("Failed to submit");
+      if (!res.ok) {
+        try {
+          const errData = await res.json();
+          throw new Error(errData.error || "Failed to submit.");
+        } catch (e: any) {
+          throw new Error(e.message === "Failed to submit." ? e.message : "An unexpected server error occurred. Please try again later.");
+        }
+      }
       
       toast({ title: "Success!", description: "Salary data contributed anonymously." });
       setShowForm(false);
       setCompany(""); setRole(""); setYoe(""); setBase(""); setBonus(""); setStock("");
       fetchSalaries();
-    } catch (error) {
-      toast({ title: "Error", description: "Failed to submit. Try again.", variant: "destructive" });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to submit. Try again.", variant: "destructive" });
     }
   };
 

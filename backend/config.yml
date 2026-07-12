@@ -13,3 +13,12 @@ database:
   checkConnectionWhileIdle: false
   evictionInterval: 10s
   minIdleTime: 1 minute
+
+server:
+  applicationConnectors:
+    - type: http
+      port: ${PORT:-8080}
+      useForwardedHeaders: true
+  adminConnectors:
+    - type: http
+      port: 8081
