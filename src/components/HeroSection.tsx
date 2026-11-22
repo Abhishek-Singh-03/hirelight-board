@@ -25,7 +25,7 @@ export function HeroSection({ searchTerm, onSearchChange, onSearchSubmit, totalJ
   ];
 
   return (
-    <section className="relative py-20 px-4 bg-gradient-to-br from-primary/5 via-background to-accent/5">
+    <section className="relative py-12 md:py-20 px-4 pt-16 md:pt-20 bg-gradient-to-br from-primary/5 via-background to-accent/5">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
 
@@ -41,8 +41,8 @@ export function HeroSection({ searchTerm, onSearchChange, onSearchSubmit, totalJ
             </p>
           </div>
 
-          {/* Search Section */}
-          <div className="max-w-2xl mx-auto">
+          {/* Search Section — hidden on mobile since the header already has a search bar */}
+          <div className="hidden md:block max-w-2xl mx-auto">
             <Card className="p-6 shadow-lg">
               <div className="flex flex-col md:flex-row md:space-x-2 space-y-2 md:space-y-0">
                 <div className="relative flex-1">
@@ -66,20 +66,20 @@ export function HeroSection({ searchTerm, onSearchChange, onSearchSubmit, totalJ
             </Card>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto pt-8">
+          {/* Stats — always 3 columns so they never stack and take the full viewport */}
+          <div className="grid grid-cols-3 gap-3 md:gap-6 max-w-3xl mx-auto pt-6 md:pt-8">
             {stats.map((stat, index) => (
-              <Card key={index} className="p-6 text-center border-0 shadow-md">
-                <CardContent className="p-0 space-y-2">
-                  <stat.icon className="h-8 w-8 mx-auto text-primary" />
-                  <div className="text-2xl font-bold">
+              <Card key={index} className="p-3 md:p-6 text-center border-0 shadow-md">
+                <CardContent className="p-0 space-y-1 md:space-y-2">
+                  <stat.icon className="h-5 w-5 md:h-8 md:w-8 mx-auto text-primary" />
+                  <div className="text-lg md:text-2xl font-bold">
                     {loading && stat.label === "Active Jobs" ? (
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto inline-block" />
+                      <Loader2 className="h-5 w-5 animate-spin mx-auto inline-block" />
                     ) : (
                       stat.value
                     )}
                   </div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
+                  <div className="text-xs md:text-sm text-muted-foreground">{stat.label}</div>
                 </CardContent>
               </Card>
             ))}

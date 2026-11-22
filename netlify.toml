@@ -8,6 +8,13 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
+# Redirect /jobs to the jobs section on the homepage
+[[redirects]]
+  from = "/jobs"
+  to = "/#jobs"
+  status = 301
+
+# SPA fallback — must be last
 [[redirects]]
   from = "/*"
   to = "/index.html"

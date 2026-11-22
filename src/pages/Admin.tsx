@@ -236,7 +236,7 @@ export default function AdminPanel() {
                 <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
                   <Mail className="h-3 w-3" /> Email
                 </label>
-                <Input type="email" placeholder="admin@hirelight.com" value={loginEmail}
+                <Input type="email" placeholder="admin@gojobwise.com" value={loginEmail}
                   onChange={e => setLoginEmail(e.target.value)} required
                   className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600 focus-visible:ring-primary" />
               </div>
