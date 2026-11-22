@@ -45,6 +45,7 @@ function AppRoutes() {
         <Route path="/community" element={<PageTransition><Community /></PageTransition>} />
         <Route path="/community/:shareCode" element={<PageTransition><Community /></PageTransition>} />
         <Route path="/salaries" element={<PageTransition><Salaries /></PageTransition>} />
+        <Route path="/jobs" element={<Navigate to="/" replace />} />
         <Route path="/jobs/:id" element={<PageTransition><JobDetail /></PageTransition>} />
         <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
         <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
