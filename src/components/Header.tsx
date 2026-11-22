@@ -153,8 +153,8 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-lg border-b shadow-xl shadow-primary/10 animate-fade-in">
-            <nav className="flex flex-col p-4 space-y-2">
+          <div className="md:hidden fixed top-16 left-0 right-0 bottom-0 z-[90] bg-background border-t border-border shadow-2xl overflow-y-auto animate-fade-in">
+            <nav className="flex flex-col p-4 space-y-1">
               {navItems.map((item) => (
                 <a
                   key={item.name}
@@ -168,9 +168,9 @@ export function Header({ searchTerm, onSearchChange, onSearchSubmit }: HeaderPro
                       setIsMobileMenuOpen(false);
                     }
                   }}
-                  className="flex items-center gap-2.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-200 px-4 py-3 rounded-lg hover:bg-primary/5 border border-transparent hover:border-primary/10"
+                  className="flex items-center gap-3 text-base font-medium text-foreground hover:text-primary transition-colors duration-200 px-4 py-4 rounded-xl hover:bg-primary/10 border border-transparent hover:border-primary/20"
                 >
-                  <item.icon className="h-4 w-4" />
+                  <item.icon className="h-5 w-5 shrink-0 text-primary" />
                   {item.name}
                 </a>
               ))}
