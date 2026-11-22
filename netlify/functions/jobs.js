@@ -1,4 +1,4 @@
-exports.handler = async function (event, context) {
+export const handler = async function (event, context) {
   try {
     const JOBS_URL = process.env.VITE_DEV_API;
     
